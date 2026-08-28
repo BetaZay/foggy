@@ -263,6 +263,8 @@ Full installation, update, rollback, and operating notes are in
 
 - Every mutation requires an authenticated Foggy session, same-origin request,
   session CSRF token, validation, and explicit confirmation where consequential.
+- Pre-authentication sign-in and server-setup forms use separate ten-minute,
+  purpose-bound signed CSRF challenges and do not depend on browser cookies.
 - API tokens remain server-side and are never serialized into EJS or browser
   bundles.
 - Technician passwords are used only for native FOG login validation and are
