@@ -200,6 +200,12 @@ the server entry point, updates the service definition, atomically switches the
 If the new release fails the health check, the application link and service unit
 are rolled back and the prior service is restarted.
 
+Dependency installation uses an update-local npm cache under the service's
+private temporary directory. It does not depend on `/root/.npm`, which is hidden
+by the update unit's `ProtectHome=true` hardening. A dependency failure before
+activation removes the incomplete release directory and leaves `current`
+untouched.
+
 Old releases are intentionally retained rather than deleted automatically. This
 keeps rollback recoverable and lets the administrator apply local retention
 policy after confirming a release is healthy.

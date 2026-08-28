@@ -29,6 +29,9 @@ test('service updater requires checksums remotely and includes rollback health c
   assert.match(updater, /rolling back/i);
   assert.match(updater, /OLD_RELEASE/);
   assert.match(updater, /foggy-update[.]path/);
+  assert.match(updater, /npm ci[^\n]+--cache "\$WORK_DIR\/npm-cache"/);
+  assert.match(updater, /RELEASE_ACTIVATED/);
+  assert.match(updater, /"\$INSTALL_ROOT\/releases\/"\*/);
 });
 
 test('built-in update bridge is fixed-source, checksum-gated, and root-owned', async () => {

@@ -19,7 +19,18 @@ UNIT_DIR="${FOGGY_SYSTEMD_UNIT_DIR:-/etc/systemd/system}"
 CONFIG_FILE="${FOGGY_SERVICE_ENV:-$CONFIG_DIR/foggy.env}"
 WORK_DIR="$(mktemp -d)"
 ARCHIVE="$WORK_DIR/release.tar.gz"
-trap 'rm -rf -- "$WORK_DIR"' EXIT
+RELEASE_DIR=""
+RELEASE_ACTIVATED=0
+
+cleanup() {
+  rm -rf -- "$WORK_DIR"
+  if (( RELEASE_ACTIVATED == 0 )) && [[ -n "$RELEASE_DIR" && -d "$RELEASE_DIR" ]]; then
+    case "$RELEASE_DIR" in
+      "$INSTALL_ROOT/releases/"*) rm -rf -- "$RELEASE_DIR" ;;
+    esac
+  fi
+}
+trap cleanup EXIT
 
 case "$SOURCE" in
   http://*|https://*)
@@ -88,7 +99,7 @@ OLD_UNIT="$WORK_DIR/foggy.service.old"
 
 install -d -m 0755 -o root -g root "$RELEASE_DIR"
 cp -R "$SOURCE_DIR/." "$RELEASE_DIR/"
-(cd "$RELEASE_DIR" && npm ci --omit=dev --ignore-scripts)
+(cd "$RELEASE_DIR" && npm ci --omit=dev --ignore-scripts --cache "$WORK_DIR/npm-cache")
 node --check "$RELEASE_DIR/src/server.js"
 chown -R root:root "$RELEASE_DIR"
 chmod -R go-w "$RELEASE_DIR"
@@ -98,6 +109,7 @@ NEW_LINK="$INSTALL_ROOT/.current-new"
 rm -f -- "$NEW_LINK"
 ln -s "$RELEASE_DIR" "$NEW_LINK"
 mv -Tf "$NEW_LINK" "$INSTALL_ROOT/current"
+RELEASE_ACTIVATED=1
 install -m 0755 -o root -g root "$RELEASE_DIR/scripts/update-service.sh" /usr/local/sbin/foggy-update
 UNIT_TEMP="$WORK_DIR/foggy.service.new"
 NODE_BIN="$(command -v node)"
