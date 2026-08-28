@@ -8,6 +8,7 @@ import {
   requireLoginCsrf,
   requireServerConfigCsrf,
   safeReturnTo,
+  verifyPreAuthCsrf,
   verifyServerConfigCsrf,
 } from '../src/auth/security.js';
 import { privateCookieOptions } from '../src/lib/cookies.js';
@@ -53,11 +54,16 @@ test('session CSRF requires both the token and same origin', () => {
   assert.equal(invalid.statusCode, 403);
 });
 
-test('login CSRF uses the HttpOnly challenge cookie and safe redirects stay local', () => {
+test('login CSRF uses a time-limited signed challenge and safe redirects stay local', () => {
+  const issuedAt = Date.now();
+  const loginToken = issuePreAuthCsrf(issuedAt);
+  assert.equal(verifyPreAuthCsrf(loginToken, issuedAt + 60_000), true);
+  assert.equal(verifyPreAuthCsrf(loginToken, issuedAt + 10 * 60 * 1000 + 1), false);
+  assert.equal(verifyPreAuthCsrf(`${loginToken}tampered`, issuedAt + 60_000), false);
   let continued = false;
   const valid = request({
-    body: { _csrf: 'challenge' },
-    get: (name) => ({ cookie: 'foggy_login_csrf=challenge', origin: 'http://foggy.test', host: 'foggy.test' })[name] || '',
+    body: { _csrf: loginToken },
+    get: (name) => ({ cookie: '', origin: 'http://foggy.test', host: 'foggy.test' })[name] || '',
   });
   requireLoginCsrf(valid, responseDouble(), () => { continued = true; });
   assert.equal(continued, true);
@@ -68,11 +74,11 @@ test('login CSRF uses the HttpOnly challenge cookie and safe redirects stay loca
 
 test('server configuration uses a separate pre-auth CSRF challenge', () => {
   const response = responseDouble();
-  const loginToken = issuePreAuthCsrf(request(), response);
+  const loginToken = issuePreAuthCsrf();
   const issuedAt = Date.now();
   const serverToken = issueServerConfigCsrf(issuedAt);
   assert.notEqual(loginToken, serverToken);
-  assert.deepEqual(response.cookies.map(({ name }) => name), ['foggy_login_csrf']);
+  assert.deepEqual(response.cookies, []);
   assert.equal(verifyServerConfigCsrf(serverToken, issuedAt + 60_000), true);
   assert.equal(verifyServerConfigCsrf(serverToken, issuedAt + 10 * 60 * 1000 + 1), false);
   assert.equal(verifyServerConfigCsrf(`${serverToken}tampered`, issuedAt + 60_000), false);
@@ -80,7 +86,7 @@ test('server configuration uses a separate pre-auth CSRF challenge', () => {
   let continued = false;
   const valid = request({
     body: { _csrf: serverToken },
-    get: (name) => ({ cookie: `foggy_login_csrf=${loginToken}`, origin: 'http://foggy.test', host: 'foggy.test' })[name] || '',
+    get: (name) => ({ cookie: '', origin: 'http://foggy.test', host: 'foggy.test' })[name] || '',
   });
   requireServerConfigCsrf(valid, responseDouble(), () => { continued = true; });
   assert.equal(continued, true);

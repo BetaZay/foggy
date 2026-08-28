@@ -61,7 +61,7 @@ function renderLogin(request, response, registry, options = {}) {
     error: options.error || '',
     referenceId: options.referenceId || '',
     serverAdded: request.query.added === '1',
-    loginCsrfToken: issuePreAuthCsrf(request, response),
+    loginCsrfToken: issuePreAuthCsrf(),
   });
 }
 
