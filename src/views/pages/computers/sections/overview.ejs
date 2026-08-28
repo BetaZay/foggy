@@ -1,0 +1,38 @@
+<section id="overview" class="scroll-mt-24">
+  <div class="mb-4"><h2 class="section-title">Overview</h2><p class="section-description mt-0.5">Identity, network state, and current work.</p></div>
+  <div class="grid gap-5 xl:grid-cols-3">
+    <div class="panel p-6 xl:col-span-2">
+      <dl class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <% const details = [
+          ['Primary MAC', computer.primaryMac || '—'], ['Assigned image', computer.imageName || 'Unassigned'],
+          ['Manufacturer', computer.manufacturer || '—'], ['Model', computer.model || '—'],
+          ['Serial number', computer.serialNumber || '—'], ['Last deployment', formatDate(computer.lastDeployedAt)]
+        ]; %>
+        <% for (const detail of details) { %><div><dt class="meta-label"><%= detail[0] %></dt><dd class="meta-value"><%= detail[1] %></dd></div><% } %>
+      </dl>
+    </div>
+    <aside class="panel p-6">
+      <div class="flex items-center justify-between gap-3"><h3 class="section-title">Network</h3><%- include('../../../components/badge', { label: computer.status || 'Unknown', tone: computer.statusTone || 'neutral' }) %></div>
+      <div class="meta-label mt-6">MAC addresses</div>
+      <div class="mt-2 space-y-2 font-mono text-xs text-stone-600">
+        <% for (const mac of computer.macs.length ? computer.macs : [computer.primaryMac]) { %><div><%= mac || '—' %></div><% } %>
+      </div>
+    </aside>
+  </div>
+  <div class="mt-5 panel overflow-hidden">
+    <div class="panel-header"><div><h3 class="section-title">Current tasks</h3><p class="section-description mt-0.5">Queued or running work for this computer.</p></div><% if (activeTasks.length) { %><a class="button-secondary" href="/computers/<%= computer.id %>/tasks/new?action=cancel">Cancel task</a><% } %></div>
+    <% if (sectionErrors.tasks) { %><div class="p-5"><%- include('../../../components/alert', { message: sectionErrors.tasks }) %></div><% } else if (!activeTasks.length) { %>
+      <div class="px-5 py-6 text-sm text-stone-500">No active task for this computer.</div>
+    <% } else { %>
+      <div class="divide-y divide-stone-100"><% for (const task of activeTasks) { %><div class="grid gap-3 px-5 py-4 sm:grid-cols-[1fr_auto_12rem] sm:items-center"><div><div class="font-semibold text-ink-950"><%= task.type.name || task.name || 'FOG task' %></div><div class="mt-0.5 text-xs text-stone-500"><%= task.image.name || 'No image' %> · <%= formatDate(task.createdAt) %></div></div><%- include('../../../components/badge', { label: task.state.name || 'Queued', tone: task.tone }) %><%- include('../../../components/progress', { progress: task.progress, label: task.progressText }) %></div><% } %></div>
+    <% } %>
+  </div>
+  <div class="mt-5 panel overflow-hidden">
+    <div class="panel-header"><div><h3 class="section-title">Diagnostics</h3><p class="section-description mt-0.5">Boot-time FOG tools for inventory and hardware troubleshooting.</p></div></div>
+    <div class="grid gap-px bg-stone-200 sm:grid-cols-2 xl:grid-cols-3">
+      <% const diagnostics = [['inventory', 'Refresh inventory', 'Collect current hardware'], ['memtest', 'Memory test', 'Run Memtest86+'], ['disk-test', 'TestDisk', 'Inspect partitions'], ['surface-test', 'Surface test', 'Check disk sectors'], ['debug', 'FOS debug', 'Open a root shell'], ['password-reset', 'Password reset', 'Blank a local account password']]; %>
+      <% for (const diagnostic of diagnostics) { %><a class="bg-white px-5 py-4 transition hover:bg-fog-50" href="/computers/<%= computer.id %>/tasks/new?action=<%= diagnostic[0] %>"><span class="block text-sm font-semibold text-ink-950"><%= diagnostic[1] %></span><span class="mt-0.5 block text-xs text-stone-500"><%= diagnostic[2] %></span></a><% } %>
+    </div>
+    <a class="flex items-center justify-between gap-4 border-t border-red-200 bg-red-50 px-5 py-4 text-red-900 transition hover:bg-red-100" href="/computers/<%= computer.id %>/tasks/new?action=wipe"><span><span class="block text-sm font-semibold">Permanently wipe disks</span><span class="mt-0.5 block text-xs text-red-700">Fast, normal, or full irreversible erasure</span></span><span aria-hidden="true">→</span></a>
+  </div>
+</section>

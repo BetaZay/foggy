@@ -1,0 +1,13 @@
+fogproject
+.env
+.env.*
+!.env.example
+config/foggy.json
+config/sessions.json
+config/*.tmp
+node_modules/
+dist/
+public/assets/
+coverage/
+*.log
+.idea

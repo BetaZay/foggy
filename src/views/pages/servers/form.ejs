@@ -1,0 +1,30 @@
+<div class="p-5 sm:p-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-fog-700">Connection details</p>
+      <h2 class="mt-1 text-xl font-bold tracking-[-0.025em] text-ink-950"><%= heading %></h2>
+      <p class="mt-1.5 max-w-xl text-sm leading-6 text-stone-500"><%= description %></p>
+    </div>
+    <% if (modal) { %><button class="button-ghost -mr-2 -mt-2 size-10 p-0" type="button" aria-label="Back to servers" hx-get="/servers/manage" hx-target="#server-manager-content" hx-swap="innerHTML">←</button><% } %>
+  </div>
+
+  <% if (formError) { %><div class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Could not save this server.</strong> <%= formError %> Re-enter both API tokens.</div><% } %>
+
+  <form
+    method="post"
+    action="<%= action %>"
+    class="mt-6 grid gap-5 sm:grid-cols-2"
+    autocomplete="off"
+    <% if (modal) { %>hx-post="<%= action %>" hx-target="#server-manager-content" hx-swap="innerHTML"<% } %>
+  >
+    <input type="hidden" name="_csrf" value="<%= preAuthCsrfToken %>">
+    <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="server-name">Display name</label><input class="input <%= errors.name ? 'border-red-400' : '' %>" id="server-name" name="name" maxlength="80" value="<%= values.name %>" placeholder="Main FOG" required><% if (errors.name) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors.name %></p><% } %></div>
+    <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="server-timeout">Request timeout</label><div class="relative"><input class="input pr-12 <%= errors.timeoutMs ? 'border-red-400' : '' %>" id="server-timeout" name="timeoutMs" type="number" min="250" max="120000" value="<%= values.timeoutMs %>" required><span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-stone-400">ms</span></div><% if (errors.timeoutMs) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors.timeoutMs %></p><% } %></div>
+    <div class="sm:col-span-2"><label class="mb-2 block text-sm font-semibold text-stone-700" for="server-url">FOG web root</label><input class="input <%= errors.baseUrl ? 'border-red-400' : '' %>" id="server-url" name="baseUrl" type="url" value="<%= values.baseUrl %>" placeholder="https://fog.example.test/fog" required><p class="mt-1.5 text-xs text-stone-500">Use the web root without <code>/api</code> or <code>/api/index.php</code>.</p><% if (errors.baseUrl) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors.baseUrl %></p><% } %></div>
+    <div class="sm:col-span-2 rounded-xl border border-stone-200 bg-stone-50/70 p-4"><div class="grid gap-5 sm:grid-cols-2">
+      <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="server-api-token">Application API token</label><input class="input bg-white font-mono <%= errors.apiToken ? 'border-red-400' : '' %>" id="server-api-token" name="apiToken" type="password" autocomplete="new-password" required><p class="mt-1.5 text-xs leading-5 text-stone-500">FOG Configuration → FOG Settings → API System</p><% if (errors.apiToken) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors.apiToken %></p><% } %></div>
+      <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="server-user-token">User API token</label><input class="input bg-white font-mono <%= errors.userToken ? 'border-red-400' : '' %>" id="server-user-token" name="userToken" type="password" autocomplete="new-password" required><p class="mt-1.5 text-xs leading-5 text-stone-500">Users → List All Users → API Settings</p><% if (errors.userToken) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors.userToken %></p><% } %></div>
+    </div><p class="mt-3 text-xs leading-5 text-amber-700">REST operations use the user-token owner's FOG permissions. Existing token values are never returned to this form.</p></div>
+    <div class="flex flex-col-reverse gap-3 border-t border-stone-200 pt-5 sm:col-span-2 sm:flex-row sm:justify-end"><% if (!modal) { %><a class="button-secondary" href="<%= cancelHref %>">Cancel</a><% } else { %><button class="button-secondary" type="button" hx-get="/servers/manage" hx-target="#server-manager-content">Cancel</button><% } %><button class="button-primary" type="submit"><%= submitLabel %></button></div>
+  </form>
+</div>

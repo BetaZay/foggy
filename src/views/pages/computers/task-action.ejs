@@ -1,0 +1,53 @@
+<%- include('../../layouts/app-start') %>
+<div class="mb-5"><a class="button-ghost -ml-3" href="/computers/<%= computer.id %>"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>Back to <%= computer.name %></a></div>
+<%- include('../../components/page-header', {
+  eyebrow: 'Task confirmation', heading: actionDetails.title,
+  description: actionDetails.description,
+  action: ''
+}) %>
+
+<% if (formError) { %><div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Cannot continue:</strong> <%= formError %></div><% } %>
+<% const blockedByTask = action !== 'cancel' && activeTasks.length > 0; const nothingToCancel = action === 'cancel' && activeTasks.length === 0; %>
+
+<form method="post" action="/computers/<%= computer.id %>/tasks" class="max-w-3xl">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="action" value="<%= action %>">
+  <section class="panel overflow-hidden">
+    <div class="panel-header"><div><h2 class="section-title"><%= computer.name %></h2><p class="section-description mt-0.5"><%= computer.primaryMac || 'No primary MAC' %></p></div><%- include('../../components/badge', { label: computer.status || 'Unknown', tone: computer.statusTone || 'neutral' }) %></div>
+    <div class="space-y-6 p-5 sm:p-6">
+      <dl class="grid gap-5 sm:grid-cols-2">
+        <div><dt class="meta-label">Assigned image</dt><dd class="meta-value"><%= computer.imageName || 'Unassigned' %></dd></div>
+        <div><dt class="meta-label">Active task</dt><dd class="meta-value"><%= activeTasks.length ? (activeTasks[0].type.name || activeTasks[0].name || 'FOG task') : 'None' %></dd></div>
+      </dl>
+
+      <% if (actionDetails.accountInput) { %><div><label class="mb-2 block text-sm font-semibold text-stone-700" for="account">Local Windows account</label><input class="input" id="account" name="account" value="<%= values.account %>" maxlength="20" autocomplete="off" required aria-describedby="account-help"><p id="account-help" class="mt-1.5 text-xs leading-5 text-stone-500">Use the local SAM account name, such as Administrator. Domain and Microsoft accounts are not supported.</p></div><% } %>
+      <% if (actionDetails.wipeInput) { %><div class="space-y-5"><fieldset><legend class="mb-2 text-sm font-semibold text-stone-700">Wipe method</legend><div class="grid gap-3 sm:grid-cols-3"><% const wipeModes = [['fast', 'Fast', 'Quickest FOG wipe mode. Exact overwrite behavior is controlled by the installed FOS version.'], ['normal', 'Normal', 'Writes one pass of zeros according to the linked FOG task definition.'], ['full', 'Full', 'Writes multiple passes of random data according to the linked FOG task definition.']]; %><% for (const mode of wipeModes) { %><label class="cursor-pointer rounded-xl border border-stone-200 p-4 has-[:checked]:border-red-400 has-[:checked]:bg-red-50"><input class="mr-2 accent-red-700" type="radio" name="wipeMode" value="<%= mode[0] %>" <%= values.wipeMode === mode[0] ? 'checked' : '' %> required><span class="text-sm font-semibold text-ink-950"><%= mode[1] %></span><span class="mt-2 block text-xs leading-5 text-stone-500"><%= mode[2] %></span></label><% } %></div></fieldset><div><label class="mb-2 block text-sm font-semibold text-red-800" for="targetConfirmation">Type <span class="font-mono"><%= computer.name %></span> to confirm the target</label><input class="input border-red-300 focus:border-red-500 focus:ring-red-100" id="targetConfirmation" name="targetConfirmation" value="<%= values.targetConfirmation %>" autocomplete="off" spellcheck="false" required></div></div><% } %>
+
+      <% if (action === 'deploy') { %>
+        <div class="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="includeSnapins" value="1" checked><span><span class="block text-sm font-semibold text-stone-800">Deploy assigned Snapins afterward</span><span class="mt-0.5 block text-xs text-stone-500">FOG will queue all Snapins assigned to this computer after imaging.</span></span></label>
+          <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="wake" value="1" checked><span><span class="block text-sm font-semibold text-stone-800">Wake the computer</span><span class="mt-0.5 block text-xs text-stone-500">Send Wake-on-LAN packets when the task is created.</span></span></label>
+          <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="shutdown" value="1"><span><span class="block text-sm font-semibold text-stone-800">Shut down when complete</span></span></label>
+        </div>
+      <% } else if (action === 'capture') { %>
+        <div class="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="wake" value="1" checked><span><span class="block text-sm font-semibold text-stone-800">Wake the computer</span><span class="mt-0.5 block text-xs text-stone-500">Send Wake-on-LAN packets when the task is created.</span></span></label>
+          <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="shutdown" value="1"><span><span class="block text-sm font-semibold text-stone-800">Shut down when complete</span></span></label>
+        </div>
+      <% } else if (actionDetails.wakeOption) { %>
+        <div class="rounded-xl border border-stone-200 bg-stone-50 p-4"><label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="wake" value="1" checked><span><span class="block text-sm font-semibold text-stone-800">Wake the computer</span><span class="mt-0.5 block text-xs text-stone-500">Send Wake-on-LAN packets after the task is created.</span></span></label></div>
+      <% } %>
+
+      <div class="rounded-xl border <%= actionDetails.danger ? 'border-red-300 bg-red-50 text-red-950' : (action === 'cancel' || action === 'capture' || action === 'deploy' || actionDetails.warning ? 'border-amber-300 bg-amber-50 text-amber-950' : 'border-sky-200 bg-sky-50 text-sky-950') %> p-4 text-sm leading-6"><strong>What happens:</strong> <%= actionDetails.consequence %></div>
+
+      <% if (blockedByTask) { %><p class="text-sm font-semibold text-red-700">This action is unavailable while the computer has an active task.</p><% } %>
+      <% if (nothingToCancel) { %><p class="text-sm font-semibold text-red-700">There is no active task left to cancel.</p><% } %>
+      <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-fog-700" type="checkbox" name="confirm" value="1" required <%= blockedByTask || nothingToCancel ? 'disabled' : '' %>><span class="text-sm font-medium text-stone-700">I understand the effect of this action and want Foggy to send it to FOG.</span></label>
+    </div>
+    <div class="flex flex-col-reverse gap-3 border-t border-stone-200 bg-stone-50/70 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+      <a class="button-secondary" href="/computers/<%= computer.id %>">Go back</a>
+      <button class="<%= action === 'cancel' || actionDetails.danger ? 'button-danger' : 'button-primary' %>" type="submit" <%= blockedByTask || nothingToCancel ? 'disabled' : '' %>><%= actionDetails.button %></button>
+    </div>
+  </section>
+</form>
+<%- include('../../layouts/app-end') %>

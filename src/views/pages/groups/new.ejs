@@ -1,0 +1,5 @@
+<%- include('../../layouts/app-start') %>
+<div class="mb-5"><a class="button-ghost -ml-3" href="/groups"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>All groups</a></div>
+<%- include('../../components/page-header', { eyebrow: 'Group management', heading: 'Create group', description: 'Create an empty organizational group, then choose its member computers.', action: '' }) %>
+<%- include('./form', { action: '/groups', submitLabel: 'Create group', cancelHref: '/groups', requiresConfirmation: false }) %>
+<%- include('../../layouts/app-end') %>

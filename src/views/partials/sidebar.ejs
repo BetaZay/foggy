@@ -1,0 +1,65 @@
+<%
+const navigation = [
+  { heading: 'Workspace' },
+  { label: 'Dashboard', href: '/', icon: 'dashboard' },
+  { label: 'Computers', href: '/computers', icon: 'computers' },
+  { label: 'Groups', href: '/groups', icon: 'groups' },
+  { heading: 'Library' },
+  { label: 'Images', href: '/images', icon: 'images' },
+  { label: 'Snapins', href: '/snapins', icon: 'archive' },
+  { heading: 'Workflows' },
+  { label: 'Deploy', href: '/deploy', icon: 'deploy' },
+  { label: 'Capture', href: '/capture', icon: 'capture' },
+  { label: 'Tasks', href: '/tasks', icon: 'tasks' },
+];
+const selectedFogServer = typeof currentFogServer !== 'undefined' ? currentFogServer : null;
+const signedInUser = typeof currentUser !== 'undefined' ? currentUser : null;
+%>
+<aside class="app-sidebar" :class="sidebarOpen && 'translate-x-0'">
+  <div class="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top_left,rgba(87,155,150,0.13),transparent_70%)]"></div>
+  <div class="relative flex h-18 items-center gap-3 px-5">
+    <div class="grid size-9 place-items-center rounded-xl bg-fog-400 text-[11px] font-black tracking-tight text-ink-950 shadow-lg shadow-black/20 ring-1 ring-white/20">FG</div>
+    <div class="min-w-0">
+      <div class="text-[16px] font-bold tracking-[-0.025em] text-white">Foggy</div>
+      <div class="text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500">Operations console</div>
+    </div>
+  </div>
+
+  <nav class="relative flex-1 overflow-y-auto px-3 pb-4 pt-2" aria-label="Primary navigation">
+    <% for (const item of navigation) { %>
+      <% if (item.heading) { %>
+        <div class="nav-heading"><%= item.heading %></div>
+      <% } else { %>
+        <a href="<%= item.href %>" class="nav-link <%= currentPath === item.href ? 'nav-link-active' : '' %>" <%= currentPath === item.href ? 'aria-current="page"' : '' %>>
+          <span class="nav-icon"><%- include('../components/icon', { name: item.icon, className: 'size-[17px]' }) %></span>
+          <span><%= item.label %></span>
+        </a>
+      <% } %>
+    <% } %>
+  </nav>
+
+  <div class="relative border-t border-white/[0.07] p-3">
+    <button
+      type="button"
+      class="server-switcher"
+      @click="serverManagerOpen = true"
+      hx-get="/servers/manage?returnTo=<%= encodeURIComponent(typeof fogServerReturnTo !== 'undefined' ? fogServerReturnTo : '/') %>"
+      hx-target="#server-manager-content"
+    >
+      <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-stone-400 ring-1 ring-inset ring-white/[0.06]"><%- include('../components/icon', { name: 'server', className: 'size-4' }) %></span>
+      <span class="min-w-0 flex-1 text-left">
+        <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full <%= selectedFogServer ? 'bg-emerald-400' : 'bg-amber-400' %>"></span><span class="truncate text-xs font-semibold text-stone-200"><%= selectedFogServer?.name || 'Configure server' %></span></span>
+        <span class="mt-0.5 block truncate text-[10px] text-stone-500"><%= selectedFogServer?.baseUrl || 'No active FOG connection' %></span>
+      </span>
+      <span class="text-sm text-stone-600" aria-hidden="true">⋯</span>
+    </button>
+
+    <% if (signedInUser) { %>
+      <div class="mt-2 flex items-center gap-3 rounded-xl px-2 py-2">
+        <div class="grid size-8 shrink-0 place-items-center rounded-full bg-fog-700/35 text-[11px] font-bold uppercase text-fog-200 ring-1 ring-inset ring-fog-400/15"><%= signedInUser.username.slice(0, 1) %></div>
+        <div class="min-w-0 flex-1"><div class="truncate text-xs font-medium text-stone-300"><%= signedInUser.username %></div><div class="text-[10px] text-stone-600">FOG technician</div></div>
+        <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="grid size-8 place-items-center rounded-lg text-stone-500 transition hover:bg-white/[0.06] hover:text-stone-200" aria-label="Sign out">↪</button></form>
+      </div>
+    <% } %>
+  </div>
+</aside>

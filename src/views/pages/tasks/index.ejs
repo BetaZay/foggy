@@ -1,0 +1,5 @@
+<%- include('../../layouts/app-start') %>
+<%- include('../../components/page-header', { eyebrow: 'Operations', heading: 'Tasks', description: 'Understand queued, running, completed, failed, and cancelled FOG work in one place.', action: status === 'active' ? '<span class="badge-info"><span class="size-1.5 rounded-full bg-current opacity-70"></span>Live refresh · 10s</span>' : '' }) %>
+<nav class="section-nav mb-6" aria-label="Task status filters"><% const filters = [['active', 'Active'], ['running', 'Running'], ['queued', 'Queued'], ['completed', 'Completed'], ['failed', 'Failed'], ['cancelled', 'Cancelled'], ['all', 'All records']]; %><% for (const filter of filters) { %><a href="/tasks?status=<%= filter[0] %>" class="<%= status === filter[0] ? 'bg-fog-100 text-fog-900' : '' %>" <%= status === filter[0] ? 'aria-current="page"' : '' %>><%= filter[1] %></a><% } %></nav>
+<div id="task-results" <% if (status === 'active') { %>hx-get="/tasks?status=active" hx-trigger="every 10s" hx-swap="innerHTML"<% } %>><%- include('table', { tasks, error, status }) %></div>
+<%- include('../../layouts/app-end') %>

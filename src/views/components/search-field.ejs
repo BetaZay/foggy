@@ -1,0 +1,16 @@
+<form
+  class="mb-6 max-w-xl"
+  role="search"
+  hx-get="<%= action %>"
+  hx-target="#<%= target %>"
+  hx-push-url="true"
+  hx-trigger="input changed delay:300ms from:input, search from:input"
+>
+  <label class="sr-only" for="<%= id %>"><%= label %></label>
+  <div class="relative">
+    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+      <%- include('icon', { name: 'search', className: 'size-4.5' }) %>
+    </span>
+    <input class="search-input" id="<%= id %>" name="search" value="<%= value %>" placeholder="<%= placeholder %>" autocomplete="off">
+  </div>
+</form>

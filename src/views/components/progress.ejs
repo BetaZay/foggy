@@ -1,0 +1,8 @@
+<div class="min-w-40">
+  <div class="mb-1.5 flex justify-between text-[11px] text-stone-500 tabular-nums">
+    <span><%= label || 'Progress' %></span><span><%= Math.max(0, Math.min(100, progress || 0)) %>%</span>
+  </div>
+  <div class="h-1.5 overflow-hidden rounded-full bg-stone-100 ring-1 ring-inset ring-stone-200/60">
+    <div class="h-full rounded-full bg-fog-500 transition-all" style="width: <%= Math.max(0, Math.min(100, progress || 0)) %>%"></div>
+  </div>
+</div>

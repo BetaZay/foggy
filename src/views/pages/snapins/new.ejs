@@ -1,0 +1,5 @@
+<%- include('../../layouts/app-start') %>
+<div class="mb-5"><a class="button-ghost -ml-3" href="/snapins"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>Back to Snapins</a></div>
+<%- include('../../components/page-header', { eyebrow: 'Software library', heading: 'Create Snapin', description: 'Upload an installer to FOG storage and configure how FOG Client executes it.', action: '' }) %>
+<%- include('form', { creating: true, action: '/snapins', values, errors, formError, lookups }) %>
+<%- include('../../layouts/app-end') %>

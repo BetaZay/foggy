@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Sign in · Foggy</title>
+    <% for (const href of assets.styles) { %><link rel="stylesheet" href="<%= href %>"><% } %>
+  </head>
+  <body x-data="{ serverManagerOpen: false }" @keydown.escape.window="serverManagerOpen = false">
+    <main class="flex min-h-screen items-center justify-center px-5 py-10">
+      <div class="w-full max-w-sm">
+        <div class="mb-8 text-center">
+          <div class="mx-auto grid size-12 place-items-center rounded-xl bg-fog-700 text-sm font-black text-white shadow-sm">FG</div>
+          <h1 class="mt-5 text-2xl font-bold tracking-[-0.035em] text-ink-950">Sign in to Foggy</h1>
+          <p class="mt-2 text-sm text-stone-500">Choose a FOG server and use your FOG account.</p>
+        </div>
+
+        <% if (serverAdded) { %><div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status"><strong>Server added.</strong> Sign in to continue.</div><% } %>
+        <% if (error) { %><div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Sign-in failed.</strong> <%= error %><% if (referenceId) { %><div class="mt-2 font-mono text-[11px] text-red-600">Reference: <%= referenceId %></div><% } %></div><% } %>
+
+        <form method="post" action="/login" class="space-y-4" autocomplete="on">
+          <input type="hidden" name="_csrf" value="<%= loginCsrfToken %>">
+          <input type="hidden" name="returnTo" value="<%= values.returnTo %>">
+          <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="serverId">Server</label><select class="input" id="serverId" name="serverId" required><% for (const server of servers) { %><option value="<%= server.id %>" <%= values.serverId === server.id ? 'selected' : '' %>><%= server.name %><%= server.setupRequired ? ' · setup required' : '' %></option><% } %></select></div>
+          <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="username">Username</label><input class="input" id="username" name="username" value="<%= values.username %>" autocomplete="username" autofocus required></div>
+          <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="password">Password</label><input class="input" id="password" name="password" type="password" autocomplete="current-password" required></div>
+          <button class="button-primary mt-2 w-full" type="submit">Sign in</button>
+        </form>
+
+        <div class="mt-6 border-t border-stone-200 pt-5 text-center">
+          <button
+            class="button-ghost"
+            type="button"
+            @click="serverManagerOpen = true"
+            hx-get="/servers/manage?returnTo=<%= encodeURIComponent(values.returnTo || '/') %>"
+            hx-target="#server-manager-content"
+          ><%- include('../../components/icon', { name: 'server', className: 'size-4' }) %>Manage FOG servers</button>
+        </div>
+      </div>
+    </main>
+    <%- include('../../partials/server-manager-modal') %>
+    <% for (const src of assets.scripts) { %><script type="module" src="<%= src %>"></script><% } %>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+<section id="computer-settings">
+  <div class="mb-5">
+    <h2 class="section-title">Host general</h2>
+    <p class="section-description mt-0.5">This is the computer’s primary edit view. Changes are saved directly to the corresponding FOG host fields.</p>
+  </div>
+
+  <% if (formError) { %><div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Cannot save:</strong> <%= formError %></div><% } %>
+
+  <form method="post" action="/computers/<%= computer.id %>" class="space-y-5">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.65fr)]">
+      <div class="panel overflow-hidden">
+        <div class="panel-header"><div><h3 class="section-title">Identity and imaging</h3><p class="section-description mt-0.5">The same core fields exposed by FOG’s Host General tab.</p></div><%- include('../../../components/badge', { label: computer.status || 'Unknown', tone: computer.statusTone || 'neutral' }) %></div>
+        <div class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-stone-700" for="name">Hostname</label>
+            <input class="input <%= errors.name ? 'border-red-400' : '' %>" id="name" name="name" value="<%= values.name %>" maxlength="15" required aria-describedby="name-help<%= errors.name ? ' name-error' : '' %>">
+            <p id="name-help" class="mt-1.5 text-xs text-stone-500">FOG 1.5 accepts up to 15 characters.</p>
+            <% if (errors.name) { %><p id="name-error" class="mt-1.5 text-xs font-medium text-red-700"><%= errors.name %></p><% } %>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-stone-700" for="imageId">Host image</label>
+            <% if (sectionErrors.images) { %>
+              <input type="hidden" name="imageId" value="<%= values.imageId %>">
+              <div class="input bg-stone-50 text-stone-500"><%= computer.imageName || 'Unassigned' %></div>
+              <p class="mt-1.5 text-xs font-medium text-amber-700">Image choices could not be loaded; the existing assignment will be preserved.</p>
+            <% } else { %>
+              <select class="input <%= errors.imageId ? 'border-red-400' : '' %>" id="imageId" name="imageId" <%= hasActiveTask ? 'disabled' : '' %>>
+                <option value="0" <%= Number(values.imageId) === 0 ? 'selected' : '' %>>No image assigned</option>
+                <% for (const image of images) { %><option value="<%= image.id %>" <%= Number(values.imageId) === image.id ? 'selected' : '' %>><%= image.name %><%= image.isEnabled ? '' : ' (disabled)' %></option><% } %>
+              </select>
+              <% if (hasActiveTask) { %><input type="hidden" name="imageId" value="<%= values.imageId %>"><p class="mt-1.5 text-xs font-medium text-amber-700">Image assignment is locked while this computer has an active task.</p><% } else { %><p class="mt-1.5 text-xs text-stone-500">Changing the assignment does not start deployment.</p><% } %>
+            <% } %>
+            <% if (errors.imageId) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors.imageId %></p><% } %>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="mb-2 block text-sm font-semibold text-stone-700" for="description">Host description</label>
+            <textarea class="input min-h-24 py-3" id="description" name="description" rows="3"><%= values.description %></textarea>
+          </div>
+          <div>
+            <div class="mb-2 text-sm font-semibold text-stone-700">Primary MAC</div>
+            <div class="input bg-stone-50 font-mono text-stone-600"><%= computer.primaryMac || '—' %></div>
+          </div>
+          <div>
+            <div class="mb-2 text-sm font-semibold text-stone-700">Additional MACs</div>
+            <div class="min-h-11 rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-2.5 font-mono text-sm text-stone-600"><%= computer.macs.filter((mac) => mac !== computer.primaryMac).join(', ') || 'None' %></div>
+          </div>
+          <div class="sm:col-span-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-5 text-stone-600"><strong>MAC editing is intentionally locked:</strong> FOG 1.5’s generic REST edit handler can unexpectedly promote an added secondary MAC to primary. Foggy displays the authoritative addresses but will not risk changing their ordering.</div>
+        </div>
+      </div>
+
+      <div class="panel overflow-hidden">
+        <div class="panel-header"><div><h3 class="section-title">Host facts</h3><p class="section-description mt-0.5">Current identity and inventory summary.</p></div></div>
+        <dl class="divide-y divide-stone-100 px-5 sm:px-6">
+          <% const facts = [['Manufacturer', computer.manufacturer], ['Model', computer.model], ['Serial number', computer.serialNumber], ['Assigned image', computer.imageName], ['Last deployment', formatDate(computer.lastDeployedAt)], ['Created', formatDate(computer.createdAt)]]; %>
+          <% for (const fact of facts) { %><div class="flex items-start justify-between gap-5 py-3.5"><dt class="text-xs text-stone-500"><%= fact[0] %></dt><dd class="max-w-[65%] break-words text-right text-xs font-semibold text-stone-800"><%= fact[1] || '—' %></dd></div><% } %>
+        </dl>
+      </div>
+    </div>
+
+    <details class="panel overflow-hidden" <%= errors.kernel || errors.kernelArgs || errors.kernelDevice || errors.init || errors.biosExit || errors.efiExit ? 'open' : '' %>>
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-stone-50 sm:px-6"><span><span class="block text-sm font-semibold text-ink-950">Advanced boot settings</span><span class="mt-0.5 block text-xs text-stone-500">Kernel, init, disk, and post-PXE exit behavior from FOG Host General.</span></span><span class="text-lg text-stone-400" aria-hidden="true">⌄</span></summary>
+      <div class="border-t border-stone-200">
+        <div class="border-b border-amber-200 bg-amber-50 px-5 py-3 text-xs leading-5 text-amber-950 sm:px-6"><strong>Use with care:</strong> Invalid kernel or boot arguments can prevent this host from entering FOS or returning to its operating system.</div>
+        <div class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+          <% const textFields = [['kernel', 'Host kernel', 'Override the global kernel filename. Leave blank for the server default.'], ['kernelArgs', 'Host kernel arguments', 'Additional kernel command-line arguments for this host.'], ['init', 'Host init', 'Override the global init image. Leave blank for the server default.'], ['kernelDevice', 'Host primary disk', 'Optional Linux disk device override, such as /dev/sda.']]; %>
+          <% for (const field of textFields) { %><div><label class="mb-2 block text-sm font-semibold text-stone-700" for="<%= field[0] %>"><%= field[1] %></label><input class="input font-mono text-sm <%= errors[field[0]] ? 'border-red-400' : '' %>" id="<%= field[0] %>" name="<%= field[0] %>" value="<%= values[field[0]] %>" maxlength="250" autocomplete="off"><p class="mt-1.5 text-xs text-stone-500"><%= field[2] %></p><% if (errors[field[0]]) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors[field[0]] %></p><% } %></div><% } %>
+          <% const exitOptions = [['', 'Use global default'], ['sanboot', 'SANBOOT'], ['grub', 'GRUB'], ['grub_first_hdd', 'GRUB — first hard disk'], ['grub_first_cdrom', 'GRUB — first CD-ROM'], ['grub_first_found_windows', 'GRUB — first Windows installation'], ['refind_efi', 'rEFInd EFI'], ['exit', 'Exit'], ['reboot', 'Reboot']]; %>
+          <% for (const exitField of [['biosExit', 'Host BIOS exit type'], ['efiExit', 'Host EFI exit type']]) { %><div><label class="mb-2 block text-sm font-semibold text-stone-700" for="<%= exitField[0] %>"><%= exitField[1] %></label><select class="input <%= errors[exitField[0]] ? 'border-red-400' : '' %>" id="<%= exitField[0] %>" name="<%= exitField[0] %>"><% for (const option of exitOptions) { %><option value="<%= option[0] %>" <%= values[exitField[0]] === option[0] ? 'selected' : '' %>><%= option[1] %></option><% } %></select><% if (errors[exitField[0]]) { %><p class="mt-1.5 text-xs font-medium text-red-700"><%= errors[exitField[0]] %></p><% } %></div><% } %>
+        </div>
+      </div>
+    </details>
+
+    <div class="flex flex-col gap-3 rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6"><p class="text-xs leading-5 text-stone-500">Product keys and Active Directory secrets are not returned to this form. They require a narrow FOG extension that preserves the legacy encryption helpers.</p><button class="button-primary shrink-0" type="submit">Save host</button></div>
+  </form>
+</section>

@@ -1,0 +1,29 @@
+<%- include('../../layouts/app-start') %>
+<div class="mb-5"><a class="button-ghost -ml-3" href="/computers"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>All computers</a></div>
+<% if (typeof updated !== 'undefined' && updated) { %><%- include('../../components/alert', { message: 'Computer details were updated successfully.', tone: 'success' }) %><% } %>
+<% if (typeof taskResult !== 'undefined' && taskResult) { const taskMessages = { deploy: 'Deployment was queued in FOG.', capture: 'Capture was queued in FOG.', wake: 'The Wake-on-LAN request was sent through FOG.', inventory: 'Hardware inventory was queued in FOG.', memtest: 'Memory testing was queued in FOG.', 'disk-test': 'TestDisk was queued in FOG.', 'surface-test': 'The disk surface test was queued in FOG.', debug: 'The FOS debug task was queued in FOG.', 'password-reset': 'The local Windows password-reset task was queued in FOG.', wipe: 'The irreversible disk wipe task was queued in FOG.', cancel: 'The active task cancellation was sent to FOG.' }; %><%- include('../../components/alert', { message: taskMessages[taskResult], tone: 'success', heading: 'Task request accepted:' }) %><% } %>
+<% if (typeof snapinQueued !== 'undefined' && snapinQueued) { %><%- include('../../components/alert', { message: 'FOG accepted the Snapin task for this computer.', tone: 'success', heading: 'Snapin task queued:' }) %><% } %>
+<% if (typeof snapinsUpdated !== 'undefined' && snapinsUpdated) { %><%- include('../../components/alert', { message: 'Snapin assignments were updated and verified against FOG.', tone: 'success', heading: 'Assignments saved:' }) %><% } %>
+<% if (typeof inventoryUpdated !== 'undefined' && inventoryUpdated) { %><%- include('../../components/alert', { message: 'Inventory ownership and asset tags were updated in FOG.', tone: 'success', heading: 'Inventory metadata saved:' }) %><% } %>
+<% if (typeof printersUpdated !== 'undefined' && printersUpdated) { %><%- include('../../components/alert', { message: 'Printer assignments, management level, and default selection were updated and verified against FOG.', tone: 'success', heading: 'Printer configuration saved:' }) %><% } %>
+<% if (typeof servicesUpdated !== 'undefined' && servicesUpdated) { %><%- include('../../components/alert', { message: 'FOG Client module settings were updated and verified against FOG.', tone: 'success', heading: 'Client services saved:' }) %><% } %>
+<% if (typeof adUpdated !== 'undefined' && adUpdated) { %><%- include('../../components/alert', { message: 'Active Directory join settings were updated in FOG. The password was not retained by Foggy or returned to this page.', tone: 'success', heading: 'Domain settings saved:' }) %><% } %>
+<% const editAction = `<div class="flex flex-wrap gap-2"><a class="button-secondary" href="/computers/${computer.id}/tasks/new?action=wake">Wake</a><a class="button-secondary" href="/computers/${computer.id}/tasks/new?action=capture">Capture</a><a class="button-primary" href="/computers/${computer.id}/tasks/new?action=deploy">Deploy</a></div>`; %>
+<%- include('../../components/page-header', {
+  eyebrow: 'Computer workspace', heading: computer.name || 'Unnamed host',
+  description: computer.description || 'Registered FOG host',
+  action: editAction
+}) %>
+
+<nav class="mb-6 flex gap-1 overflow-x-auto border-b border-stone-200" aria-label="Computer sections">
+  <% for (const tab of computerTabs) { %><a class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition <%= activeTab === tab.id ? 'border-fog-700 text-fog-800' : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-800' %>" href="/computers/<%= computer.id %>?tab=<%= tab.id %>" <% if (activeTab === tab.id) { %>aria-current="page"<% } %>><%= tab.label %></a><% } %>
+</nav>
+
+<% if (activeTab === 'general') { %><%- include('sections/settings') %>
+<% } else if (activeTab === 'active-directory') { %><%- include('sections/active-directory') %>
+<% } else if (activeTab === 'tasks') { %><%- include('sections/overview') %>
+<% } else if (activeTab === 'inventory') { %><%- include('sections/inventory') %>
+<% } else if (['groups', 'snapins', 'printers'].includes(activeTab)) { %><%- include('sections/assignments') %>
+<% } else if (['services', 'power'].includes(activeTab)) { %><%- include('sections/services') %>
+<% } else if (activeTab === 'history') { %><%- include('sections/history') %><% } %>
+<%- include('../../layouts/app-end') %>

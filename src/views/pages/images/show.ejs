@@ -1,0 +1,48 @@
+<%- include('../../layouts/app-start') %>
+<div class="mb-5"><a class="button-ghost -ml-3" href="/images"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>All images</a></div>
+<% if (updated) { %><%- include('../../components/alert', { message: 'The image definition was updated in FOG.', tone: 'success' }) %><% } %>
+<%- include('../../components/page-header', {
+  eyebrow: 'Image library',
+  heading: image.name || 'Unnamed image',
+  description: image.description || 'No description has been added.',
+  action: `<div class="flex flex-wrap gap-2"><a class="button-secondary" href="#image-settings">Edit definition</a><a class="button-secondary" href="/capture?image=${image.id}">Capture</a><a class="button-primary" href="/deploy?image=${image.id}">Deploy</a></div>`,
+}) %>
+
+<div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="stat-card"><div class="text-sm font-medium text-stone-500">Assigned computers</div><div class="stat-value"><%= assignedHosts.length %></div><div class="mt-1 text-xs text-stone-400">Currently using this definition</div></div>
+  <div class="stat-card"><div class="text-sm font-medium text-stone-500">Stored size</div><div class="mt-4 text-xl font-bold tracking-[-0.03em] text-ink-950"><%= formatBytes(image.size) %></div><div class="mt-1 text-xs text-stone-400">Reported by FOG storage</div></div>
+  <div class="stat-card"><div class="text-sm font-medium text-stone-500">Storage group</div><div class="mt-4 truncate text-xl font-bold tracking-[-0.03em] text-ink-950"><%= image.storageGroup || 'Unknown' %></div><div class="mt-1 text-xs text-stone-400">Primary associated group</div></div>
+  <div class="stat-card"><div class="text-sm font-medium text-stone-500">Active tasks</div><div class="stat-value"><%= activeTasks.length %></div><div class="mt-1 text-xs text-stone-400">Deploying or capturing now</div></div>
+</div>
+
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.58fr)]">
+  <section class="panel overflow-hidden">
+    <div class="panel-header"><div><h2 class="section-title">Image definition</h2><p class="section-description mt-0.5">The metadata Foggy uses for deploy and capture workflows.</p></div><%- include('../../components/badge', { label: image.isEnabled ? 'Enabled' : 'Disabled', tone: image.isEnabled ? 'success' : 'neutral' }) %></div>
+    <dl class="grid gap-x-8 gap-y-6 p-5 sm:grid-cols-2 sm:p-6">
+      <div><dt class="meta-label">Storage path</dt><dd class="meta-value break-all font-mono"><%= image.path || '—' %></dd></div>
+      <div><dt class="meta-label">Operating system</dt><dd class="meta-value"><%= image.operatingSystem || '—' %></dd></div>
+      <div><dt class="meta-label">Image type</dt><dd class="meta-value"><%= image.imageType || '—' %></dd></div>
+      <div><dt class="meta-label">Partition layout</dt><dd class="meta-value"><%= image.partitionType || '—' %></dd></div>
+      <div><dt class="meta-label">Compression</dt><dd class="meta-value"><%= image.compression ?? '—' %></dd></div>
+      <div><dt class="meta-label">Format</dt><dd class="meta-value"><% const formats = ['Partclone Gzip', 'Partimage', 'Partclone Gzip split', 'Partclone uncompressed', 'Partclone uncompressed split', 'Partclone Zstd', 'Partclone Zstd split']; %><%= formats[image.format] || `Format ${image.format ?? 'unknown'}` %></dd></div>
+      <div><dt class="meta-label">Protection</dt><dd class="meta-value"><%= image.isProtected ? 'Protected from capture overwrite' : 'Not protected' %></dd></div>
+      <div><dt class="meta-label">Replication</dt><dd class="meta-value"><%= image.replicates ? 'Enabled' : 'Disabled' %></dd></div>
+      <div><dt class="meta-label">Created</dt><dd class="meta-value"><%= formatDate(image.createdAt) %><% if (image.createdBy) { %> by <%= image.createdBy %><% } %></dd></div>
+      <div><dt class="meta-label">Last deployment</dt><dd class="meta-value"><%= formatDate(image.lastDeployedAt) %></dd></div>
+    </dl>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="panel-header"><div><h2 class="section-title">Current activity</h2><p class="section-description mt-0.5">Tasks that reference this image.</p></div></div>
+    <% if (!activeTasks.length) { %><div class="p-5 text-sm text-stone-500 sm:p-6">No active tasks are using this image.</div><% } else { %><div class="divide-y divide-stone-100"><% for (const task of activeTasks) { %><div class="p-5"><div class="flex items-center justify-between gap-3"><a class="font-semibold text-fog-800 hover:underline" href="/computers/<%= task.host.id %>"><%= task.host.name || 'Unknown computer' %></a><%- include('../../components/badge', { label: task.state.name, tone: task.tone }) %></div><div class="mt-3"><%- include('../../components/progress', { progress: task.progress, label: task.type.name || 'Task' }) %></div></div><% } %></div><% } %>
+  </section>
+</div>
+
+<section class="mt-8">
+  <div class="mb-4"><h2 class="section-title">Assigned computers</h2><p class="section-description mt-0.5">Hosts whose current image assignment points to this definition.</p></div>
+  <% if (!assignedHosts.length) { %><%- include('../../components/empty-state', { heading: 'No assigned computers', description: 'This image can still be selected from Deploy or Capture.' }) %><% } else { %>
+    <div class="table-card"><div class="table-scroll"><table class="data-table min-w-[720px]"><thead><tr><th class="table-head">Computer</th><th class="table-head">Hardware</th><th class="table-head">Serial</th><th class="table-head">Network</th></tr></thead><tbody><% for (const host of assignedHosts) { %><tr class="table-row"><td class="table-cell"><a class="font-semibold text-fog-800 hover:underline" href="/computers/<%= host.id %>"><%= host.name || 'Unnamed host' %></a><div class="mt-0.5 font-mono text-[11px] text-stone-400"><%= host.primaryMac || '—' %></div></td><td class="table-cell"><div><%= host.manufacturer || '—' %></div><div class="text-xs text-stone-400"><%= host.model || '' %></div></td><td class="table-cell text-stone-600"><%= host.serialNumber || '—' %></td><td class="table-cell"><%- include('../../components/badge', { label: host.status || 'Unknown', tone: host.statusTone || 'neutral' }) %></td></tr><% } %></tbody></table></div></div>
+  <% } %>
+</section>
+<%- include('./definition-form') %>
+<%- include('../../layouts/app-end') %>

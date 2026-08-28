@@ -1,0 +1,33 @@
+{
+  "name": "foggy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A modern, task-focused management frontend for FOG Project 1.5.x",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,vite -c cyan,magenta \"npm:dev:server\" \"npm:dev:vite\"",
+    "dev:server": "nodemon --watch src --ext js,ejs src/server.js",
+    "dev:vite": "vite",
+    "build": "vite build",
+    "start": "NODE_ENV=production node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "alpinejs": "^3.15.0",
+    "dotenv": "^17.2.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "htmx.org": "^2.0.7",
+    "multer": "^2.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "concurrently": "^9.2.0",
+    "nodemon": "^3.1.10",
+    "tailwindcss": "^4.1.0",
+    "vite": "^7.1.0"
+  }
+}

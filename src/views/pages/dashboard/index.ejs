@@ -1,0 +1,65 @@
+<%- include('../../layouts/app-start') %>
+<%- include('../../components/page-header', {
+  eyebrow: 'Operations overview',
+  heading: 'Dashboard',
+  description: 'The current state of your imaging environment at a glance.',
+  action: ''
+}) %>
+
+<% if (typeof serverAdded !== 'undefined' && serverAdded) { %><div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status"><strong>FOG server added.</strong> It is now selected for this browser.</div><% } %>
+
+<% for (const message of errors) { %><%- include('../../components/alert', { message }) %><% } %>
+
+<div class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <% const cards = [
+    ['Computers', stats.computers, 'Registered hosts', 'computers', 'bg-fog-50 text-fog-700 ring-fog-200'],
+    ['Images', stats.images, 'Available library', 'images', 'bg-violet-50 text-violet-700 ring-violet-200'],
+    ['Running', stats.active, 'Making progress', 'activity', 'bg-sky-50 text-sky-700 ring-sky-200'],
+    ['Queued', stats.queued, 'Waiting to start', 'clock', 'bg-amber-50 text-amber-700 ring-amber-200']
+  ]; %>
+  <% for (const card of cards) { %>
+    <div class="stat-card">
+      <div class="flex items-start justify-between gap-4"><div class="text-sm font-medium text-stone-500"><%= card[0] %></div><div class="grid size-9 place-items-center rounded-lg ring-1 ring-inset <%= card[4] %>"><%- include('../../components/icon', { name: card[3], className: 'size-4.5' }) %></div></div>
+      <div class="stat-value"><%= card[1] %></div>
+      <div class="mt-1 text-xs text-stone-400"><%= card[2] %></div>
+    </div>
+  <% } %>
+</div>
+
+<section class="mb-8">
+  <div class="mb-4 flex items-center justify-between gap-4">
+    <div><h2 class="section-title">Imaging now</h2><p class="section-description mt-0.5">Queued and active FOG tasks</p></div>
+    <a href="/tasks" class="button-ghost">View all <span aria-hidden="true">→</span></a>
+  </div>
+  <% if (!activeTasks.length) { %>
+    <%- include('../../components/empty-state', { heading: 'No active tasks', description: 'Nothing is queued or imaging right now.' }) %>
+  <% } else { %>
+    <div class="table-card"><div class="table-scroll">
+      <table class="data-table min-w-[760px]">
+        <thead><tr><th class="table-head">Computer</th><th class="table-head">Task</th><th class="table-head">Image</th><th class="table-head">State</th><th class="table-head">Progress</th></tr></thead>
+        <tbody>
+          <% for (const task of activeTasks) { %>
+            <tr class="table-row"><td class="table-cell font-semibold text-ink-950"><%= task.host.name || 'Unknown host' %></td><td class="table-cell"><%= task.type.name || task.name || 'Task' %></td><td class="table-cell text-stone-500"><%= task.image.name || '—' %></td><td class="table-cell"><%- include('../../components/badge', { label: task.state.name, tone: task.tone }) %></td><td class="table-cell"><%- include('../../components/progress', { progress: task.progress, label: task.progressText }) %></td></tr>
+          <% } %>
+        </tbody>
+      </table></div>
+    </div>
+  <% } %>
+</section>
+
+<section>
+  <h2 class="section-title mb-4">Recent task records</h2>
+  <% if (!recentTasks.length) { %>
+    <%- include('../../components/empty-state', { heading: 'No task records', description: 'Task records returned by FOG will appear here.' }) %>
+  <% } else { %>
+    <div class="panel divide-y divide-stone-100 overflow-hidden">
+      <% for (const task of recentTasks) { %>
+        <div class="flex flex-col gap-2 px-5 py-3.5 transition hover:bg-fog-50/35 sm:flex-row sm:items-center sm:justify-between">
+          <div><span class="font-semibold text-ink-950"><%= task.host.name || 'Unknown host' %></span><span class="mx-2 text-stone-300">·</span><span class="text-sm text-stone-600"><%= task.type.name || task.name || 'Task' %></span></div>
+          <div class="flex items-center gap-3"><%- include('../../components/badge', { label: task.state.name, tone: task.tone }) %><span class="text-xs text-stone-400"><%= formatDate(task.createdAt) %></span></div>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+</section>
+<%- include('../../layouts/app-end') %>

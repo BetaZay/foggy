@@ -1,0 +1,4 @@
+<% const success = typeof tone !== 'undefined' && tone === 'success'; const prefix = typeof heading !== 'undefined' ? heading : (success ? 'Saved:' : 'Connection notice:'); %>
+<div class="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm leading-6 <%= success ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900' %>" role="status">
+  <span class="mt-2 size-1.5 shrink-0 rounded-full <%= success ? 'bg-emerald-500' : 'bg-amber-500' %>"></span><div><strong class="font-semibold"><%= prefix %></strong> <%= message %></div>
+</div>

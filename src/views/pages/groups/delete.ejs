@@ -1,0 +1,17 @@
+<%- include('../../layouts/app-start') %>
+<div class="mb-5"><a class="button-ghost -ml-3" href="/groups/<%= group.id %>"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>Back to <%= group.name %></a></div>
+<%- include('../../components/page-header', { eyebrow: 'Group management', heading: `Delete ${group.name}`, description: 'Permanently remove this organizational group from FOG.', action: '' }) %>
+<% if (formError) { %><div class="mb-6 max-w-3xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Confirmation required:</strong> <%= formError %></div><% } %>
+<form method="post" action="/groups/<%= group.id %>/delete" class="max-w-3xl">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <section class="overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm">
+    <div class="border-b border-red-100 bg-red-50 px-5 py-4 sm:px-6"><h2 class="text-base font-semibold text-red-950">Delete group and membership associations</h2><p class="mt-1 text-sm text-red-800"><%= members.length %> member computer<%= members.length === 1 ? '' : 's' %> will be detached from this group.</p></div>
+    <div class="space-y-5 p-5 sm:p-6">
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950"><strong>Member computers will not be deleted.</strong> Their image assignments, tasks, inventory, and settings remain in FOG. Settings previously applied through legacy group operations are not rolled back.</div>
+      <div><label class="mb-2 block text-sm font-semibold text-stone-700" for="groupName">Enter <span class="font-mono text-red-800"><%= group.name %></span> to confirm</label><input class="input" id="groupName" name="groupName" autocomplete="off" required></div>
+      <label class="flex items-start gap-3"><input class="mt-1 size-4 accent-red-700" type="checkbox" name="confirm" value="1" required><span class="text-sm font-medium text-stone-700">Remove this group record and all of its membership associations.</span></label>
+    </div>
+    <div class="flex flex-col-reverse gap-3 border-t border-red-100 bg-red-50/60 px-5 py-4 sm:flex-row sm:justify-end sm:px-6"><a class="button-secondary" href="/groups/<%= group.id %>">Cancel</a><button class="button-danger" type="submit">Delete group</button></div>
+  </section>
+</form>
+<%- include('../../layouts/app-end') %>

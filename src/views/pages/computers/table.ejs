@@ -1,0 +1,23 @@
+<% if (error) { %><%- include('../../components/alert', { message: error }) %><% } %>
+<% if (!computers.length) { %>
+  <%- include('../../components/empty-state', { heading: search ? 'No matching computers' : 'No computers found', description: search ? 'Try a broader hostname, MAC, manufacturer, or model.' : 'Registered FOG hosts will appear here.' }) %>
+<% } else { %>
+  <div class="table-card"><div class="table-scroll">
+    <table class="data-table min-w-[960px]">
+      <thead><tr><th class="table-head">Hostname</th><th class="table-head">MAC address</th><th class="table-head">Hardware</th><th class="table-head">Serial</th><th class="table-head">Assigned image</th><th class="table-head">Status</th></tr></thead>
+      <tbody>
+        <% for (const computer of computers) { %>
+          <tr class="table-row">
+            <td class="table-cell"><a class="font-semibold text-fog-800 transition hover:text-fog-900 hover:underline" href="/computers/<%= computer.id %>"><%= computer.name || 'Unnamed host' %></a></td>
+            <td class="table-cell font-mono text-xs text-stone-600"><%= computer.primaryMac || '—' %></td>
+            <td class="table-cell"><div><%= computer.manufacturer || '—' %></div><div class="text-xs text-stone-400"><%= computer.model %></div></td>
+            <td class="table-cell text-stone-600"><%= computer.serialNumber || '—' %></td>
+            <td class="table-cell text-stone-600"><%= computer.imageName || 'Unassigned' %></td>
+            <td class="table-cell"><%- include('../../components/badge', { label: computer.status || 'Unknown', tone: computer.statusTone || 'neutral' }) %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="count-label"><%= computers.length %> computer<%= computers.length === 1 ? '' : 's' %></p>
+<% } %>
