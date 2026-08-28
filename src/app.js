@@ -14,6 +14,10 @@ import { createServerRouter } from './routes/servers.js';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+export function healthCheck(req, res) {
+  return res.status(200).json({ status: 'ok' });
+}
+
 export function createApp({
   registry = new FogRegistry(new ConfigStore(env.configFile, { seed: env.fog })),
   sessions = new SessionStore({ ttlMs: env.sessionTtlMs, filePath: env.sessionFile }),
@@ -37,6 +41,7 @@ export function createApp({
     immutable: env.isProduction,
     maxAge: env.isProduction ? '1y' : 0,
   }));
+  app.get('/healthz', healthCheck);
   app.use(express.urlencoded({ extended: false }));
   app.use(fogContext.middleware);
   app.use(createAuthRouter(registry, sessions));

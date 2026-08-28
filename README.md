@@ -97,6 +97,20 @@ are never returned to setup forms. Older files migrate atomically; a version-2
 server is marked as needing setup until both tokens are re-entered through its
 Configure link. Stored usernames and passwords are removed during migration.
 
+### Linux service and release builds
+
+Create a tested, checksummed production archive with:
+
+```sh
+npm run release
+```
+
+Foggy includes a hardened systemd installer and rollback-capable updater for
+Debian, Ubuntu, Fedora, and Arch Linux. Releases install under `/opt/foggy`,
+while configuration and state remain under `/etc/foggy` and `/var/lib/foggy`.
+See [`docs/linux-service.md`](docs/linux-service.md) for prerequisites,
+installation, service diagnostics, updates, and rollback behavior.
+
 ## FOG integration
 
 All upstream calls live under `src/fog/`. Routes and views consume only clean,
