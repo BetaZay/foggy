@@ -7,24 +7,33 @@ without putting credentials or mutable state inside the application directory.
 ## Requirements
 
 - A 64-bit or otherwise Node-supported Linux installation using systemd
-- Node.js 22 or newer and npm
+- Node.js 22 or newer and npm (installed automatically when needed)
 - `tar`, `sha256sum`, and standard GNU user/file utilities
 - `curl` or `wget` only when updating directly from an HTTPS URL
 - Root access for installation and service management
 
-Install Node.js and npm through a trusted source appropriate for the operating
-system. Distribution packages change over time, so verify the result instead of
-assuming a package name supplies a sufficiently new runtime:
+The service installer detects Debian/Ubuntu, Fedora/RHEL-family, and Arch and
+installs the required certificate, download, archive, and checksum utilities
+with that distribution's package manager. If Node.js 22+ and npm are not
+already available, it downloads the latest official Node 22 Linux archive,
+verifies it against Node.js's published `SHASUMS256.txt`, installs it under
+`/opt/nodejs/releases`, and exposes it through `/usr/local/bin`.
+
+You can verify the result with:
 
 ```sh
 node --version
 npm --version
 ```
 
-Foggy's installer stops without changing the service if Node's major version is
-older than 22. On Debian or Ubuntu, the distribution release may require an
-official Node.js binary or a trusted Node.js repository. Fedora and Arch often
-carry newer runtimes, but the same explicit version check still applies.
+Pass `--skip-dependencies` only when dependencies are managed separately:
+
+```sh
+sudo ./foggy-0.1.0/scripts/install-service.sh --skip-dependencies
+```
+
+The installer still validates Node 22+, npm, systemd, and the required system
+utilities before changing the service.
 
 ## Build a release
 
@@ -68,10 +77,10 @@ The installer:
 - installs and enables `/etc/systemd/system/foggy.service`; and
 - installs `/usr/local/sbin/foggy-update`.
 
-The default service listens on `0.0.0.0:3000`. Open
-`http://<server-address>:3000/` to add the first FOG server. For an exposed or
+The default service listens on `0.0.0.0:7400`. Open
+`http://<server-address>:7400/` to add the first FOG server. For an exposed or
 multi-user installation, place Foggy behind an HTTPS reverse proxy and restrict
-port 3000 with the host firewall.
+port 7400 with the host firewall.
 
 Use `--no-start` when preparing an image or when configuration must be reviewed
 before the first start:
@@ -106,7 +115,7 @@ Useful diagnostics:
 ```sh
 systemctl status foggy.service
 journalctl -u foggy.service -n 200 --no-pager
-curl --fail http://127.0.0.1:3000/healthz
+curl --fail http://127.0.0.1:7400/healthz
 ```
 
 The health endpoint reports only application readiness and does not expose FOG

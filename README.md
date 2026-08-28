@@ -24,7 +24,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Foggy binds to `0.0.0.0:3000` by default; Vite binds to `0.0.0.0:5173` and its
+Foggy binds to `0.0.0.0:7400` by default; Vite binds to `0.0.0.0:5173` and its
 asset URLs follow the hostname used by the browser. Without complete FOG
 credentials, the application still starts in a clearly marked setup state so
 the interface can be developed safely.

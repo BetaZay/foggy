@@ -12,6 +12,12 @@ function parsePositiveInteger(name, fallback) {
   return parsed;
 }
 
+function parsePort(name, fallback) {
+  const port = parsePositiveInteger(name, fallback);
+  if (port > 65535) throw new Error(`${name} must be between 1 and 65535`);
+  return port;
+}
+
 function parseFogConfig() {
   const name = process.env.FOG_SERVER_NAME?.trim();
   const baseUrl = process.env.FOG_BASE_URL?.trim();
@@ -63,7 +69,7 @@ export const env = Object.freeze({
   nodeEnv,
   isProduction: nodeEnv === 'production',
   host: process.env.HOST?.trim() || '0.0.0.0',
-  port: parsePositiveInteger('PORT', 3000),
+  port: parsePort('PORT', 7400),
   viteDevServer: process.env.VITE_DEV_SERVER?.trim() || '',
   configFile: path.resolve(process.env.FOGGY_CONFIG_FILE?.trim() || 'config/foggy.json'),
   sessionFile: path.resolve(process.env.FOGGY_SESSION_FILE?.trim() || 'config/sessions.json'),

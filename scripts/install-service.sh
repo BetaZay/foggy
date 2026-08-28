@@ -12,8 +12,24 @@ STATE_DIR="${FOGGY_STATE_DIR:-/var/lib/foggy}"
 CONFIG_DIR="${FOGGY_CONFIG_DIR:-/etc/foggy}"
 UNIT_DIR="${FOGGY_SYSTEMD_UNIT_DIR:-/etc/systemd/system}"
 NO_START=0
-if [[ "${1:-}" == "--no-start" ]]; then
-  NO_START=1
+SKIP_DEPENDENCIES=0
+for option in "$@"; do
+  case "$option" in
+    --no-start) NO_START=1 ;;
+    --skip-dependencies) SKIP_DEPENDENCIES=1 ;;
+    *) echo "Unknown option: $option" >&2; echo "Usage: install-service.sh [--no-start] [--skip-dependencies]" >&2; exit 2 ;;
+  esac
+done
+
+if [[ ! -f "$SOURCE_DIR/release-manifest.json" || ! -f "$SOURCE_DIR/public/assets/.vite/manifest.json" ]]; then
+  echo "This installer must be run from an extracted Foggy release archive." >&2
+  echo "Build one with: npm run release" >&2
+  exit 1
+fi
+
+if (( SKIP_DEPENDENCIES == 0 )); then
+  "$SOURCE_DIR/scripts/install-dependencies.sh"
+  hash -r
 fi
 
 for command_name in node npm systemctl useradd groupadd getent install sed; do
@@ -28,12 +44,6 @@ if (( NODE_MAJOR < 22 )); then
   echo "Foggy requires Node.js 22 or newer; found $(node --version)." >&2
   exit 1
 fi
-if [[ ! -f "$SOURCE_DIR/release-manifest.json" || ! -f "$SOURCE_DIR/public/assets/.vite/manifest.json" ]]; then
-  echo "This installer must be run from an extracted Foggy release archive." >&2
-  echo "Build one with: npm run release" >&2
-  exit 1
-fi
-
 VERSION="$(node -p "require('$SOURCE_DIR/package.json').version")"
 RELEASE_ID="$VERSION-$(date -u +%Y%m%d%H%M%S)"
 RELEASE_DIR="$INSTALL_ROOT/releases/$RELEASE_ID"
@@ -67,7 +77,7 @@ if [[ ! -f "$CONFIG_DIR/foggy.env" ]]; then
   printf '%s\n' \
     'NODE_ENV=production' \
     'HOST=0.0.0.0' \
-    'PORT=3000' \
+    'PORT=7400' \
     "FOGGY_CONFIG_FILE=$STATE_DIR/foggy.json" \
     "FOGGY_SESSION_FILE=$STATE_DIR/sessions.json" \
     'FOGGY_SESSION_TTL_MS=3600000' \
@@ -88,7 +98,7 @@ ln -sfnT "$RELEASE_DIR" "$INSTALL_ROOT/current"
 systemctl daemon-reload
 if (( NO_START == 0 )); then
   systemctl enable --now foggy.service
-  echo "Foggy is running. Open http://<server-address>:3000/ to finish setup."
+  echo "Foggy is running. Open http://<server-address>:7400/ to finish setup."
 else
   echo "Foggy installed without starting (--no-start)."
 fi

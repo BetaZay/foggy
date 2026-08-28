@@ -97,7 +97,7 @@ systemctl daemon-reload
 systemctl restart foggy.service
 
 PORT="$(awk -F= '/^[[:space:]]*PORT=/{value=$2} END{gsub(/[[:space:]]/, "", value); print value}' "$CONFIG_FILE" 2>/dev/null || true)"
-[[ "$PORT" =~ ^[0-9]+$ ]] || PORT=3000
+[[ "$PORT" =~ ^[0-9]+$ ]] || PORT=7400
 HEALTHY=0
 for _ in $(seq 1 30); do
   if systemctl is-active --quiet foggy.service && \

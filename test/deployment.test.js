@@ -19,3 +19,13 @@ test('service updater requires checksums remotely and includes rollback health c
   assert.match(updater, /rolling back/i);
   assert.match(updater, /OLD_RELEASE/);
 });
+
+test('dependency bootstrap supports target distributions and verifies official Node archives', async () => {
+  const installer = await readFile('scripts/install-dependencies.sh', 'utf8');
+  assert.match(installer, /apt-get install/);
+  assert.match(installer, /dnf install/);
+  assert.match(installer, /pacman -S/);
+  assert.match(installer, /latest-v22[.]x/);
+  assert.match(installer, /SHASUMS256[.]txt/);
+  assert.match(installer, /sha256sum --check --strict/);
+});
