@@ -72,6 +72,7 @@ test('one-command installer downloads the latest release and verifies it before 
 
 test('release workflow generates CalVer tags and publishes verified assets', async () => {
   const workflow = await readFile('.github/workflows/release.yml', 'utf8');
+  const builder = await readFile('scripts/build-release.sh', 'utf8');
   assert.match(workflow, /branches:\s*\n\s*- main/);
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /date -u \+%Y.*date -u \+%-m.*GITHUB_RUN_NUMBER/);
@@ -80,4 +81,5 @@ test('release workflow generates CalVer tags and publishes verified assets', asy
   assert.match(workflow, /foggy-\$FOGGY_RELEASE_VERSION[.]tar[.]gz[.]sha256/);
   assert.match(workflow, /scripts\/install-foggy[.]sh/);
   assert.match(workflow, /--target "\$GITHUB_SHA"/);
+  assert.match(builder, /cp -R public\/brand "\$RELEASE_DIR\/public\/"/);
 });

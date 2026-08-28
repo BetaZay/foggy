@@ -52,6 +52,10 @@ export function createApp({
     immutable: env.isProduction,
     maxAge: env.isProduction ? '1y' : 0,
   }));
+  app.use('/brand', express.static(path.join(rootDirectory, 'public/brand'), {
+    index: false,
+    maxAge: env.isProduction ? '7d' : 0,
+  }));
   app.get('/healthz', healthCheck);
   app.use(express.urlencoded({ extended: false }));
   app.use(fogContext.middleware);

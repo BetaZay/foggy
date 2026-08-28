@@ -1,3 +1,5 @@
+<p align="center"><img src="public/brand/foggy-mark.svg" width="96" height="96" alt="Foggy logo"></p>
+
 # Foggy
 
 [![CI](https://github.com/BetaZay/foggy/actions/workflows/ci.yml/badge.svg)](https://github.com/BetaZay/foggy/actions/workflows/ci.yml)

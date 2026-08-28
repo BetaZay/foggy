@@ -114,6 +114,11 @@ test('read-only pages and HTMX partials render with normalized resource data', a
   for (const [template, data] of pages) {
     const html = await render(template, data);
     assert.match(html, /<!doctype html>/i, `${template} should render a full page`);
+    assert.match(html, /href="\/brand\/favicon[.]svg"/, `${template} should include the Foggy favicon`);
+    if (template === 'pages/dashboard/index.ejs' || template === 'pages/auth/login.ejs') {
+      assert.match(html, /src="\/brand\/foggy-mark[.]svg"/);
+      assert.doesNotMatch(html, />FG</);
+    }
     if (template === 'pages/computers/show.ejs') {
       assert.match(html, /aria-current="page">General</);
       assert.match(html, /\?tab=tasks/);

@@ -43,6 +43,7 @@ npm run build
 mkdir -p "$RELEASE_DIR/public" "$OUTPUT_DIR"
 cp -R src docs deployment scripts "$RELEASE_DIR/"
 cp -R public/assets "$RELEASE_DIR/public/"
+cp -R public/brand "$RELEASE_DIR/public/"
 cp package.json package-lock.json README.md .env.example "$RELEASE_DIR/"
 if [[ "$VERSION" != "$SOURCE_VERSION" ]]; then
   node -e '
