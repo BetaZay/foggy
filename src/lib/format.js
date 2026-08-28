@@ -17,6 +17,11 @@ export function formatBytes(value) {
   return `${(bytes / (1024 ** unit)).toFixed(unit > 1 ? 1 : 0)} ${units[unit]}`;
 }
 
+export function formatBytesPerMinute(value) {
+  const formatted = formatBytes(value);
+  return formatted === '—' ? '—' : `${formatted}/min`;
+}
+
 export function taskTone(task) {
   if (task.category === 'failed') return 'danger';
   if (task.category === 'completed') return 'success';

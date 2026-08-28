@@ -1,6 +1,6 @@
 <%- include('../../layouts/app-start') %>
 <div class="mb-5"><a class="button-ghost -ml-3" href="/computers/<%= computer.id %>#assignments"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>Back to <%= computer.name %></a></div>
-<%- include('../../components/page-header', { eyebrow: 'Snapin task', heading: requestedSnapin === 'all' ? 'Run all assigned Snapins' : `Run ${selectedSnapin.name}`, description: `Queue a FOG Client task for ${computer.name}.`, action: '' }) %>
+<%- include('../../components/page-header', { eyebrow: 'Snapin task', heading: requestedSnapin === 'all' ? 'Run all assigned Snapins' : `Run ${selectedSnapin.name}`, description: computer.name, action: '' }) %>
 <% if (formError) { %><div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Cannot queue Snapins:</strong> <%= formError %></div><% } %>
 <% const blocked = activeTasks.length > 0; const selected = requestedSnapin === 'all' ? snapins.filter((snapin) => snapin.isEnabled) : [selectedSnapin]; %>
 <form method="post" action="/computers/<%= computer.id %>/snapins/run" class="max-w-3xl">

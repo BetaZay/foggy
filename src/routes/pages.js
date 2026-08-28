@@ -1534,7 +1534,13 @@ export function createPageRouter(fog) {
   router.get('/tasks', async (req, res) => {
     const allowedStatuses = new Set(['active', 'running', 'queued', 'completed', 'failed', 'cancelled', 'all']);
     const status = allowedStatuses.has(String(req.query.status)) ? String(req.query.status) : 'active';
-    const tasks = await settle(() => status === 'active' ? fog.tasks.listActive() : fog.tasks.list());
+    const isLiveStatus = ['active', 'running', 'queued'].includes(status);
+    const [tasks, multicast] = await Promise.all([
+      settle(() => isLiveStatus ? fog.tasks.listActive() : fog.tasks.list()),
+      isLiveStatus
+        ? settle(() => fog.multicast.listActive())
+        : Promise.resolve({ data: [], error: null }),
+    ]);
     const filteredTasks = tasks.data.filter((task) => {
       if (status === 'all') return true;
       if (status === 'active') return ['running', 'queued'].includes(task.category);
@@ -1543,10 +1549,13 @@ export function createPageRouter(fog) {
     const model = {
       tasks: filteredTasks.map((task) => ({ ...task, tone: taskTone(task) })),
       status,
-      error: tasks.error,
+      multicastSessions: multicast.data
+        .filter((session) => status === 'active' || session.category === status)
+        .map((session) => ({ ...session, tone: taskTone(session) })),
+      error: tasks.error || multicast.error,
     };
     if (req.get('HX-Request') === 'true') {
-      return res.render('pages/tasks/table', model);
+      return res.render('pages/tasks/results', model);
     }
     return res.render('pages/tasks/index', {
       title: 'Active Tasks',

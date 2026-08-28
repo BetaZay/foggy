@@ -3,7 +3,7 @@
 <% if (membersUpdated) { %><%- include('../../components/alert', { message: 'Group membership was updated and verified against FOG.', tone: 'success' }) %><% } %>
 <% if (created) { %><%- include('../../components/alert', { message: 'The group was created in FOG. Add computers when you are ready.', tone: 'success' }) %><% } %>
 <% if (updated) { %><%- include('../../components/alert', { message: 'The group name and description were updated.', tone: 'success' }) %><% } %>
-<%- include('../../components/page-header', { eyebrow: 'Computer group', heading: group.name || 'Unnamed group', description: group.description || 'FOG host group', action: `<div class="flex flex-wrap gap-2"><a class="button-secondary" href="#group-settings">Edit group</a><a class="button-primary" href="/groups/${group.id}/members/edit">Manage membership</a></div>` }) %>
+<%- include('../../components/page-header', { eyebrow: 'Computer group', heading: group.name || 'Unnamed group', description: group.description, action: `<div class="flex flex-wrap gap-2"><a class="button-secondary" href="#group-settings">Edit group</a><a class="button-primary" href="/groups/${group.id}/members/edit">Manage membership</a></div>` }) %>
 
 <div class="mb-6 grid gap-4 sm:grid-cols-3">
   <div class="stat-card"><div class="text-sm font-medium text-stone-500">Members</div><div class="stat-value"><%= members.length %></div><div class="mt-1 text-xs text-stone-400">Registered computers</div></div>
@@ -12,14 +12,14 @@
 </div>
 
 <section class="mb-8">
-  <div class="mb-4"><h2 class="section-title">Members</h2><p class="section-description mt-0.5">Hardware, image assignment, and current status for every group member.</p></div>
-  <% if (!members.length) { %><%- include('../../components/empty-state', { heading: 'No group members', description: 'Computers added to this FOG group will appear here.' }) %><% } else { %>
+  <div class="mb-4"><h2 class="section-title">Members</h2></div>
+  <% if (!members.length) { %><%- include('../../components/empty-state', { heading: 'No group members', description: '' }) %><% } else { %>
     <div class="table-card"><div class="table-scroll"><table class="data-table min-w-[900px]"><thead><tr><th class="table-head">Computer</th><th class="table-head">Hardware</th><th class="table-head">Serial</th><th class="table-head">Image</th><th class="table-head">Network</th><th class="table-head">Task</th></tr></thead><tbody>
       <% for (const member of members) { const task = activeTasks.find((item) => item.host.id === member.id); %><tr class="table-row"><td class="table-cell"><a class="font-semibold text-fog-800 hover:underline" href="/computers/<%= member.id %>"><%= member.name || 'Unnamed host' %></a><div class="mt-0.5 font-mono text-[11px] text-stone-400"><%= member.primaryMac || '—' %></div></td><td class="table-cell"><div><%= member.manufacturer || '—' %></div><div class="text-xs text-stone-400"><%= member.model || '' %></div></td><td class="table-cell text-stone-600"><%= member.serialNumber || '—' %></td><td class="table-cell text-stone-600"><%= member.imageName || 'Unassigned' %></td><td class="table-cell"><%- include('../../components/badge', { label: member.status || 'Unknown', tone: member.statusTone || 'neutral' }) %></td><td class="table-cell"><% if (task) { %><div class="text-sm font-semibold text-stone-800"><%= task.type.name || task.name || 'Task' %></div><div class="mt-1"><%- include('../../components/badge', { label: task.state.name, tone: task.tone }) %></div><% } else { %><span class="text-stone-400">—</span><% } %></td></tr><% } %>
     </tbody></table></div></div>
   <% } %>
 </section>
 <% if (taskError) { %><%- include('../../components/alert', { message: taskError }) %><% } %>
-<section id="group-settings" class="mt-8 scroll-mt-24"><div class="mb-4"><h2 class="section-title">Edit group details</h2><p class="section-description mt-0.5">Update this group without leaving its workspace.</p></div><%- include('./form', { action: `/groups/${group.id}`, submitLabel: 'Save group', cancelHref: `/groups/${group.id}`, requiresConfirmation: true }) %></section>
+<section id="group-settings" class="mt-8 scroll-mt-24"><div class="mb-4"><h2 class="section-title">Edit group details</h2></div><%- include('./form', { action: `/groups/${group.id}`, submitLabel: 'Save group', cancelHref: `/groups/${group.id}`, requiresConfirmation: true }) %></section>
 <div class="mt-8 border-t border-stone-200 pt-6"><a class="text-sm font-semibold text-red-700 hover:underline" href="/groups/<%= group.id %>/delete">Delete this group</a></div>
 <%- include('../../layouts/app-end') %>

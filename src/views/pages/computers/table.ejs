@@ -1,6 +1,6 @@
 <% if (error) { %><%- include('../../components/alert', { message: error }) %><% } %>
 <% if (!computers.length) { %>
-  <%- include('../../components/empty-state', { heading: search ? 'No matching computers' : 'No computers found', description: search ? 'Try a broader hostname, MAC, manufacturer, or model.' : 'Registered FOG hosts will appear here.' }) %>
+  <%- include('../../components/empty-state', { heading: search ? 'No matching computers' : 'No computers found', description: search ? 'Try a broader search.' : '' }) %>
 <% } else { %>
   <div class="table-card"><div class="table-scroll">
     <table class="data-table min-w-[960px]">

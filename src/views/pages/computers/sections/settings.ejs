@@ -1,7 +1,6 @@
 <section id="computer-settings">
   <div class="mb-5">
     <h2 class="section-title">Host general</h2>
-    <p class="section-description mt-0.5">This is the computer’s primary edit view. Changes are saved directly to the corresponding FOG host fields.</p>
   </div>
 
   <% if (formError) { %><div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Cannot save:</strong> <%= formError %></div><% } %>
@@ -10,7 +9,7 @@
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.65fr)]">
       <div class="panel overflow-hidden">
-        <div class="panel-header"><div><h3 class="section-title">Identity and imaging</h3><p class="section-description mt-0.5">The same core fields exposed by FOG’s Host General tab.</p></div><%- include('../../../components/badge', { label: computer.status || 'Unknown', tone: computer.statusTone || 'neutral' }) %></div>
+        <div class="panel-header"><h3 class="section-title">Identity and imaging</h3><%- include('../../../components/badge', { label: computer.status || 'Unknown', tone: computer.statusTone || 'neutral' }) %></div>
         <div class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
           <div>
             <label class="mb-2 block text-sm font-semibold text-stone-700" for="name">Hostname</label>
@@ -50,7 +49,7 @@
       </div>
 
       <div class="panel overflow-hidden">
-        <div class="panel-header"><div><h3 class="section-title">Host facts</h3><p class="section-description mt-0.5">Current identity and inventory summary.</p></div></div>
+        <div class="panel-header"><h3 class="section-title">Host facts</h3></div>
         <dl class="divide-y divide-stone-100 px-5 sm:px-6">
           <% const facts = [['Manufacturer', computer.manufacturer], ['Model', computer.model], ['Serial number', computer.serialNumber], ['Assigned image', computer.imageName], ['Last deployment', formatDate(computer.lastDeployedAt)], ['Created', formatDate(computer.createdAt)]]; %>
           <% for (const fact of facts) { %><div class="flex items-start justify-between gap-5 py-3.5"><dt class="text-xs text-stone-500"><%= fact[0] %></dt><dd class="max-w-[65%] break-words text-right text-xs font-semibold text-stone-800"><%= fact[1] || '—' %></dd></div><% } %>

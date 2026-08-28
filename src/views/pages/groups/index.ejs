@@ -1,10 +1,10 @@
 <%- include('../../layouts/app-start') %>
-<%- include('../../components/page-header', { eyebrow: 'Inventory', heading: 'Groups', description: 'FOG host groups and their current membership counts.', action: '<a class="button-primary" href="/groups/new">Create group</a>' }) %>
+<%- include('../../components/page-header', { eyebrow: 'Inventory', heading: 'Groups', description: '', action: '<a class="button-primary" href="/groups/new">Create group</a>' }) %>
 <% if (created) { %><%- include('../../components/alert', { message: 'The group was created in FOG.', tone: 'success' }) %><% } %>
 <% if (deletedName) { %><%- include('../../components/alert', { message: `The group “${deletedName}” and its membership associations were deleted. Member computers were preserved.`, tone: 'success' }) %><% } %>
 <% if (error) { %><%- include('../../components/alert', { message: error }) %><% } %>
 <% if (!groups.length) { %>
-  <%- include('../../components/empty-state', { heading: 'No groups found', description: 'FOG groups will appear here.' }) %>
+  <%- include('../../components/empty-state', { heading: 'No groups found', description: '' }) %>
 <% } else { %>
   <div class="panel overflow-hidden">
     <% for (const group of groups) { %><a href="/groups/<%= group.id %>" class="flex items-center justify-between gap-5 border-b border-stone-100 px-5 py-4 transition hover:bg-fog-50/40 last:border-0"><div class="flex min-w-0 items-center gap-3"><div class="grid size-9 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-500"><%- include('../../components/icon', { name: 'groups', className: 'size-4.5' }) %></div><div class="min-w-0"><h2 class="truncate text-sm font-semibold text-ink-950"><%= group.name %></h2><p class="mt-0.5 truncate text-sm text-stone-500"><%= group.description || 'No description' %></p></div></div><span class="badge-info shrink-0"><span class="size-1.5 rounded-full bg-current opacity-70"></span><%= group.hostCount %> hosts</span></a><% } %>

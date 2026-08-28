@@ -345,7 +345,7 @@ export function normalizeTask(task = {}) {
     createdAt: stringOrEmpty(task.createdTime),
     checkedInAt: stringOrEmpty(task.checkInTime),
     scheduledFor: stringOrEmpty(task.scheduledStartTime),
-    progress: numberOrNull(task.pct) ?? 0,
+    progress: Math.max(0, Math.min(100, numberOrNull(task.pct) ?? 0)),
     progressText: stringOrEmpty(task.percent),
     bytesPerMinute: numberOrNull(task.bpm),
     elapsed: stringOrEmpty(task.timeElapsed),
@@ -354,6 +354,31 @@ export function normalizeTask(task = {}) {
     dataTotal: stringOrEmpty(task.dataTotal),
     storageNode: stringOrEmpty(task.storagenode?.name),
     storageGroup: stringOrEmpty(task.storagegroup?.name),
+  };
+}
+
+export function normalizeMulticastSession(session = {}) {
+  const stateId = numberOrNull(session.state?.id ?? session.stateID);
+  const stateName = stringOrEmpty(session.state?.name);
+  const normalizedState = stateName.toLowerCase();
+  let category = 'other';
+  if (stateId === 1 || stateId === 2 || normalizedState.includes('queue') || normalizedState.includes('checked')) category = 'queued';
+  else if (stateId === 3 || normalizedState.includes('progress') || normalizedState.includes('running')) category = 'running';
+  else if (stateId === 4 || normalizedState.includes('complete')) category = 'completed';
+  else if (stateId === 5 || normalizedState.includes('cancel')) category = 'cancelled';
+  return {
+    id: numberOrNull(session.id),
+    name: stringOrEmpty(session.name),
+    image: session.image && typeof session.image === 'object'
+      ? { id: numberOrNull(session.image.id), name: stringOrEmpty(session.image.name) }
+      : { id: numberOrNull(session.imageID ?? session.image), name: '' },
+    state: { id: stateId, name: stateName },
+    category,
+    progress: Math.max(0, Math.min(100, numberOrNull(session.percent) ?? 0)),
+    clientCount: numberOrNull(session.sessclients) ?? numberOrNull(session.clients) ?? 0,
+    startedAt: stringOrEmpty(session.starttime),
+    completedAt: stringOrEmpty(session.completetime),
+    storageGroupId: numberOrNull(session.storagegroupID),
   };
 }
 

@@ -1,0 +1,12 @@
+<% if (multicastSessions.length) { %>
+  <section class="mb-6">
+    <h2 class="section-title mb-3">Multicast sessions</h2>
+    <div class="table-card"><div class="table-scroll">
+      <table class="data-table min-w-[760px]">
+        <thead><tr><th class="table-head">Session</th><th class="table-head">Image</th><th class="table-head">Computers</th><th class="table-head">Started</th><th class="table-head">State</th><th class="table-head">Progress</th></tr></thead>
+        <tbody><% for (const session of multicastSessions) { %><tr class="table-row"><td class="table-cell font-semibold text-ink-950"><%= session.name || 'Multicast' %></td><td class="table-cell text-stone-500"><%= session.image.name || '—' %></td><td class="table-cell tabular-nums"><%= session.clientCount %></td><td class="table-cell text-stone-500"><%= formatDate(session.startedAt) %></td><td class="table-cell"><%- include('../../components/badge', { label: session.state.name, tone: session.tone }) %></td><td class="table-cell"><%- include('../../components/progress', { progress: session.progress, label: session.category === 'queued' ? 'Queued' : 'Imaging' }) %></td></tr><% } %></tbody>
+      </table>
+    </div></div>
+  </section>
+<% } %>
+<%- include('table', { tasks, error, status }) %>

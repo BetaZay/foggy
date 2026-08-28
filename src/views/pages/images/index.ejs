@@ -1,5 +1,5 @@
 <%- include('../../layouts/app-start') %>
-<%- include('../../components/page-header', { eyebrow: 'Library', heading: 'Images', description: 'The deployable image library reported by FOG.', action: '<a class="button-primary" href="/images/new">Create image</a>' }) %>
+<%- include('../../components/page-header', { eyebrow: 'Library', heading: 'Images', description: '', action: '<a class="button-primary" href="/images/new">Create image</a>' }) %>
 <%- include('../../components/search-field', { id: 'image-search', label: 'Search images', action: '/images', target: 'image-results', value: search, placeholder: 'Search image name or description…' }) %>
 <div id="image-results"><%- include('grid', { images, search, error }) %></div>
 <%- include('../../layouts/app-end') %>

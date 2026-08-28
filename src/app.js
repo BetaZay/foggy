@@ -8,7 +8,7 @@ import { ConfigStore } from './config/config-store.js';
 import { env } from './config/env.js';
 import { createFogContext, FogRegistry } from './fog/registry.js';
 import { loadAssets } from './lib/assets.js';
-import { formatBytes, formatDate } from './lib/format.js';
+import { formatBytes, formatBytesPerMinute, formatDate } from './lib/format.js';
 import { createPageRouter } from './routes/pages.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createServerRouter } from './routes/servers.js';
@@ -40,6 +40,7 @@ export function createApp({
   app.set('view engine', 'ejs');
   app.set('views', path.join(rootDirectory, 'src/views'));
   app.locals.formatBytes = formatBytes;
+  app.locals.formatBytesPerMinute = formatBytesPerMinute;
   app.locals.formatDate = formatDate;
 
   app.use((req, res, next) => {

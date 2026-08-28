@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ejs from 'ejs';
-import { formatBytes, formatDate } from '../src/lib/format.js';
+import { formatBytes, formatBytesPerMinute, formatDate } from '../src/lib/format.js';
 
 const host = {
   id: 1,
@@ -55,6 +55,7 @@ const views = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src
 const common = {
   assets: { scripts: ['/main.js'], styles: ['/main.css'] },
   formatBytes,
+  formatBytesPerMinute,
   formatDate,
   csrfToken: 'test-csrf-token',
 };
@@ -101,7 +102,7 @@ test('read-only pages and HTMX partials render with normalized resource data', a
     ['pages/groups/delete.ejs', { title: 'Delete Lab', currentPath: '/groups', group, members: [host], formError: '' }],
     ['pages/groups/show.ejs', { title: 'Lab', currentPath: '/groups', group, members: [host], activeTasks: [], taskError: null, membersUpdated: false, created: false, updated: false, values: { name: 'Lab', description: 'Room 2' }, errors: {}, formError: '' }],
     ['pages/groups/edit-members.ejs', { title: 'Manage Lab membership', currentPath: '/groups', group: { id: 2, name: 'Lab' }, computers: [host], selectedIds: new Set([host.id]), formError: '' }],
-    ['pages/tasks/index.ejs', { title: 'Tasks', currentPath: '/tasks', tasks: [], status: 'active', error: null }],
+    ['pages/tasks/index.ejs', { title: 'Tasks', currentPath: '/tasks', tasks: [], multicastSessions: [], status: 'active', error: null }],
     ['pages/administration/updates.ejs', { title: 'Updates', currentPath: '/administration/updates', status: { enabled: true, currentVersion: '2026.8.10', latest: { version: '2026.8.12', url: 'https://github.com/BetaZay/foggy/releases/tag/2026.8.12' }, updateAvailable: true, agentStatus: null, checkError: '' }, requested: false, formError: '' }],
     ['pages/deploy/index.ejs', { title: 'Deploy', currentPath: '/deploy', computers: [host], images: [{ id: 3, name: 'Windows 11', description: '', operatingSystem: 'Windows', imageType: 'Resizable', storageGroup: 'default' }], values: { hostIds: [host.id], imageId: '3', includeSnapins: true, wake: true, shutdown: false }, formError: '' }],
     ['pages/deploy/results.ejs', { title: 'Deployment results', currentPath: '/deploy', result: { image: { name: 'Windows 11' }, queued: 1, failed: 0, outcomes: [{ host, status: 'queued', imageChanged: false, message: 'Deployment queued.' }] } }],
@@ -153,6 +154,27 @@ test('read-only pages and HTMX partials render with normalized resource data', a
   });
   assert.match(partial, /BUILD-01/);
   assert.doesNotMatch(partial, /<!doctype html>/i);
+
+  const taskResults = await render('pages/tasks/results.ejs', {
+    status: 'active', error: null,
+    tasks: [{
+      id: 9, name: 'Deploy', host, image: { id: 3, name: 'Windows 11' },
+      type: { id: 1, name: 'Deploy' }, state: { id: 3, name: 'In Progress' },
+      category: 'running', tone: 'info', createdAt: '2026-08-27 10:00:00',
+      checkedInAt: '2026-08-27 10:01:00', progress: 42, elapsed: '00:04:12',
+      remaining: '00:01:08', dataCopied: '8.1 GB', dataTotal: '10.0 GB',
+      bytesPerMinute: 1048576,
+    }],
+    multicastSessions: [{
+      id: 3, name: 'Lab', image: { id: 3, name: 'Windows 11' },
+      state: { id: 3, name: 'In Progress' }, category: 'running', tone: 'info',
+      progress: 25, clientCount: 8, startedAt: '2026-08-27 10:00:00',
+    }],
+  });
+  assert.match(taskResults, /Multicast sessions/);
+  assert.match(taskResults, /8\.1 GB \/ 10\.0 GB/);
+  assert.match(taskResults, /1\.0 MB\/min/);
+  assert.doesNotMatch(taskResults, /<!doctype html>/i);
 
   const manager = await render('pages/servers/manager.ejs', {
     servers: [{ id: 'primary', name: 'Primary FOG', baseUrl: 'http://fog.test/fog', setupRequired: false }],

@@ -23,7 +23,6 @@ const signedInUser = typeof currentUser !== 'undefined' ? currentUser : null;
     <div class="grid size-9 place-items-center rounded-xl bg-fog-400 text-[11px] font-black tracking-tight text-ink-950 shadow-lg shadow-black/20 ring-1 ring-white/20">FG</div>
     <div class="min-w-0">
       <div class="text-[16px] font-bold tracking-[-0.025em] text-white">Foggy</div>
-      <div class="text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500">Operations console</div>
     </div>
   </div>
 
@@ -59,7 +58,7 @@ const signedInUser = typeof currentUser !== 'undefined' ? currentUser : null;
     <% if (signedInUser) { %>
       <div class="mt-2 flex items-center gap-3 rounded-xl px-2 py-2">
         <div class="grid size-8 shrink-0 place-items-center rounded-full bg-fog-700/35 text-[11px] font-bold uppercase text-fog-200 ring-1 ring-inset ring-fog-400/15"><%= signedInUser.username.slice(0, 1) %></div>
-        <div class="min-w-0 flex-1"><div class="truncate text-xs font-medium text-stone-300"><%= signedInUser.username %></div><div class="text-[10px] text-stone-600">FOG technician</div></div>
+        <div class="min-w-0 flex-1"><div class="truncate text-xs font-medium text-stone-300"><%= signedInUser.username %></div></div>
         <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="grid size-8 place-items-center rounded-lg text-stone-500 transition hover:bg-white/[0.06] hover:text-stone-200" aria-label="Sign out">↪</button></form>
       </div>
     <% } %>

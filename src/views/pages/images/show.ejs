@@ -4,7 +4,7 @@
 <%- include('../../components/page-header', {
   eyebrow: 'Image library',
   heading: image.name || 'Unnamed image',
-  description: image.description || 'No description has been added.',
+  description: image.description,
   action: `<div class="flex flex-wrap gap-2"><a class="button-secondary" href="#image-settings">Edit definition</a><a class="button-secondary" href="/capture?image=${image.id}">Capture</a><a class="button-primary" href="/deploy?image=${image.id}">Deploy</a></div>`,
 }) %>
 
@@ -17,7 +17,7 @@
 
 <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.58fr)]">
   <section class="panel overflow-hidden">
-    <div class="panel-header"><div><h2 class="section-title">Image definition</h2><p class="section-description mt-0.5">The metadata Foggy uses for deploy and capture workflows.</p></div><%- include('../../components/badge', { label: image.isEnabled ? 'Enabled' : 'Disabled', tone: image.isEnabled ? 'success' : 'neutral' }) %></div>
+    <div class="panel-header"><h2 class="section-title">Image definition</h2><%- include('../../components/badge', { label: image.isEnabled ? 'Enabled' : 'Disabled', tone: image.isEnabled ? 'success' : 'neutral' }) %></div>
     <dl class="grid gap-x-8 gap-y-6 p-5 sm:grid-cols-2 sm:p-6">
       <div><dt class="meta-label">Storage path</dt><dd class="meta-value break-all font-mono"><%= image.path || '—' %></dd></div>
       <div><dt class="meta-label">Operating system</dt><dd class="meta-value"><%= image.operatingSystem || '—' %></dd></div>

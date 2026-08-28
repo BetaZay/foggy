@@ -11,7 +11,7 @@
 <% const editAction = `<div class="flex flex-wrap gap-2"><a class="button-secondary" href="/computers/${computer.id}/tasks/new?action=wake">Wake</a><a class="button-secondary" href="/computers/${computer.id}/tasks/new?action=capture">Capture</a><a class="button-primary" href="/computers/${computer.id}/tasks/new?action=deploy">Deploy</a></div>`; %>
 <%- include('../../components/page-header', {
   eyebrow: 'Computer workspace', heading: computer.name || 'Unnamed host',
-  description: computer.description || 'Registered FOG host',
+  description: computer.description,
   action: editAction
 }) %>
 

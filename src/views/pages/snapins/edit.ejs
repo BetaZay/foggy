@@ -1,6 +1,6 @@
 <%- include('../../layouts/app-start') %>
 <div class="mb-5"><a class="button-ghost -ml-3" href="/snapins"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>Back to Snapins</a></div>
-<%- include('../../components/page-header', { eyebrow: 'Snapin definition', heading: snapin.name || 'Snapin', description: snapin.file ? `Stored file: ${snapin.file}` : 'Edit FOG Client execution behavior.', action: '' }) %>
+<%- include('../../components/page-header', { eyebrow: 'Snapin definition', heading: snapin.name || 'Snapin', description: snapin.file ? `Stored file: ${snapin.file}` : '', action: '' }) %>
 <% if (created) { %><div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status"><strong>Snapin created.</strong> Confirm the referenced file exists on the selected storage group before assigning or running it.</div><% } %>
 <% if (updated) { %><div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status"><strong>Snapin updated.</strong> FOG returned the saved definition.</div><% } %>
 <%- include('form', { creating: false, action: `/snapins/${snapin.id}`, snapin, values, errors, formError }) %>

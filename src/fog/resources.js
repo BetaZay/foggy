@@ -9,6 +9,7 @@ import {
   normalizeImagingLog,
   normalizeLoginEvent,
   normalizeLookup,
+  normalizeMulticastSession,
   normalizePowerSchedule,
   normalizePrinter,
   normalizeSnapin,
@@ -1544,6 +1545,12 @@ export function createResources(client) {
         }
         await client.delete(`host/${hostId}/cancel`, { responseType: 'json' });
         return { hostId, cancelledTaskIds: activeTasks.map((task) => task.id) };
+      },
+    },
+    multicast: {
+      async listActive() {
+        const payload = await getJson(client, 'multicastsession/current');
+        return normalizeCollection(payload, 'multicastsessions', normalizeMulticastSession);
       },
     },
   };

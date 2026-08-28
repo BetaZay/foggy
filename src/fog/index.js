@@ -18,6 +18,7 @@ function unavailableResources(setupRequired = false) {
     power: { forHost: reject },
     history: { forHost: reject },
     tasks: { list: reject, listActive: reject, forHost: reject, createForHost: reject, runSnapins: reject, cancelForHost: reject },
+    multicast: { listActive: reject },
   };
 }
 

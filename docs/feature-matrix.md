@@ -35,6 +35,7 @@ Status values:
 | --- | --- | --- | --- |
 | Operational dashboard counts and active work | `GET /host`, `/image`, `/task`, `/task/active` | Available | Current dashboard is the initial read model. |
 | Running and queued tasks | `GET /task/active` | Available | Shared task categories drive the unified Tasks screen and live refresh. |
+| Active multicast visibility | `GET /multicastsession/current` | Available | The active task view shows session, image, client count, state, start time, and progress. Creation and cancellation remain gated. |
 | Completed, cancelled, failed, and all task records | `GET /task` | Available with limitation | Stock FOG has no failed imaging state; Foggy shows explicit error/failure states but does not invent failures. Task rows are not guaranteed durable history. |
 | Deploy, capture, and wake | `POST /host/{id}/task` | Available | Dedicated confirmed commands validate active state and image requirements; no raw numeric task-type form. |
 | Run one/all assigned Snapins | `POST /host/{id}/task` types 13/12 | Available | Validates enabled assignment, refuses active-task merging, and confirms client-side execution. |
@@ -44,7 +45,7 @@ Status values:
 | Group tasking and multicast | `POST /group/{id}/task`, multicast resources | Trace required | Must report partial/group outcomes clearly and verify multicast lifecycle. |
 | Scheduled tasks | Generic `/scheduledtask` resource | Trace required | Cron semantics, recurrence, cancellation, and timezone handling need tracing. |
 | Cancel host task | `DELETE /host/{id}/cancel` | Available | Dedicated warning and confirmation; broader task/job cancellation remains mapped. |
-| Progress refresh | `GET /task/active` | Mapped | HTMX polling with backoff, visibility awareness, and terminal-state handling. |
+| Progress refresh | `GET /task/active`, `/multicastsession/current` | Available | The active task view refreshes every ten seconds while visible and shows FOG-reported percent, elapsed/remaining time, copied/total data, and transfer rate. FOG does not provide a trustworthy stalled flag, so Foggy does not invent one. |
 
 ## Computers
 

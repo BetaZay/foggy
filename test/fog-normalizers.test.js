@@ -4,6 +4,7 @@ import {
   normalizeHost,
   normalizeImage,
   normalizeLoginEvent,
+  normalizeMulticastSession,
   normalizeSnapinTask,
   normalizeTask,
 } from '../src/fog/normalizers.js';
@@ -97,6 +98,25 @@ test('nested task hosts receive the same secret-removing normalization', () => {
   assert.equal(task.category, 'running');
   assert.equal(task.host.name, 'BUILD-07');
   assert.equal(Object.hasOwn(task.host, 'ADPass'), false);
+});
+
+test('live task and multicast progress is clamped and operational fields are retained', () => {
+  const task = normalizeTask({
+    pct: '140', bpm: '1048576', timeElapsed: '00:04:12', timeRemaining: '00:01:08',
+    dataCopied: '8.1 GB', dataTotal: '10.0 GB', checkInTime: '2026-08-27 12:00:00',
+  });
+  const session = normalizeMulticastSession({
+    id: '3', name: 'Lab', percent: '-5', sessclients: '12', starttime: '2026-08-27 12:00:00',
+    image: { id: '4', name: 'Windows 11' }, state: { id: '3', name: 'In Progress' },
+  });
+
+  assert.equal(task.progress, 100);
+  assert.equal(task.bytesPerMinute, 1048576);
+  assert.equal(task.remaining, '00:01:08');
+  assert.equal(session.progress, 0);
+  assert.equal(session.clientCount, 12);
+  assert.equal(session.category, 'running');
+  assert.equal(session.image.name, 'Windows 11');
 });
 
 test('host ping status converts FOG presentation HTML into a plain semantic label', () => {

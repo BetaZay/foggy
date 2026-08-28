@@ -1,5 +1,5 @@
 <%- include('../../layouts/app-start') %>
-<%- include('../../components/page-header', { eyebrow: 'Administration', heading: 'Updates', description: 'Check the published Foggy release and safely request an in-place service update.', action: '' }) %>
+<%- include('../../components/page-header', { eyebrow: 'Administration', heading: 'Updates', description: '', action: '' }) %>
 
 <% if (requested) { %>
   <%- include('../../components/alert', { tone: 'success', heading: 'Update queued:', message: 'The system update handler accepted the request. Foggy will restart if a newer release is installed.' }) %>
@@ -11,7 +11,7 @@
 <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.7fr)]">
   <section class="panel p-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
-      <div><h2 class="text-base font-semibold text-ink-950">Release status</h2><p class="mt-1 text-sm text-stone-500">Versions use year.month.action-number.</p></div>
+      <h2 class="text-base font-semibold text-ink-950">Release status</h2>
       <% if (status.updateAvailable) { %><span class="badge-warning">Update available</span><% } else if (status.latest && !status.checkError) { %><span class="badge-success">Up to date</span><% } %>
     </div>
     <dl class="mt-6 grid gap-4 sm:grid-cols-2">

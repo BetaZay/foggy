@@ -1,6 +1,6 @@
 <%- include('../../layouts/app-start') %>
 <div class="mb-5"><a class="button-ghost -ml-3" href="/capture"><%- include('../../components/icon', { name: 'arrow-left', className: 'size-4' }) %>Back to Capture</a></div>
-<%- include('../../components/page-header', { eyebrow: 'Image library', heading: 'Create image definition', description: 'Create the FOG metadata and storage association first, then continue into guided Capture.', action: '' }) %>
+<%- include('../../components/page-header', { eyebrow: 'Image library', heading: 'Create image definition', description: '', action: '' }) %>
 <% if (formError) { %><div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Cannot create image:</strong> <%= formError %></div><% } %>
 <form method="post" action="/images" class="max-w-4xl">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">

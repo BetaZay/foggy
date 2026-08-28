@@ -2,7 +2,7 @@
 <%- include('../../components/page-header', {
   eyebrow: 'Operations overview',
   heading: 'Dashboard',
-  description: 'The current state of your imaging environment at a glance.',
+  description: '',
   action: ''
 }) %>
 
@@ -50,7 +50,7 @@
 <section>
   <h2 class="section-title mb-4">Recent task records</h2>
   <% if (!recentTasks.length) { %>
-    <%- include('../../components/empty-state', { heading: 'No task records', description: 'Task records returned by FOG will appear here.' }) %>
+    <%- include('../../components/empty-state', { heading: 'No task records', description: '' }) %>
   <% } else { %>
     <div class="panel divide-y divide-stone-100 overflow-hidden">
       <% for (const task of recentTasks) { %>

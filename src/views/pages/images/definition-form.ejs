@@ -1,5 +1,5 @@
 <section id="image-settings" class="mt-8 scroll-mt-24">
-  <div class="mb-4"><h2 class="section-title">Edit image definition</h2><p class="section-description mt-0.5">Update imaging metadata without leaving this image workspace.</p></div>
+  <div class="mb-4"><h2 class="section-title">Edit image definition</h2></div>
   <% if (formError) { %><div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert"><strong>Cannot update this image:</strong> <%= formError %></div><% } %>
   <form method="post" action="/images/<%= image.id %>" class="max-w-5xl">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">

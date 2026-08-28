@@ -215,6 +215,31 @@ UI locations:
 - Side effects: none expected; nested host formatting has the ping caveat.
 - Evidence: `Route::active` and `Route::getter('task')`.
 
+### List active multicast sessions
+
+- Call: `GET /multicastsession/current`
+- Authentication: `fog-api-token` and `fog-user-token` headers.
+- Request body/query: none.
+- Response: `{ "count": number, "multicastsessions": MulticastSession[] }`.
+- Foggy retains only the session id/name, image id/name, task state, reported
+  percentage, expected/session client count, start/completion timestamps, and
+  storage-group id.
+- Use: the active, running, and queued task views poll this collection alongside
+  `GET /task/active`. The browser never calls FOG directly.
+- Permissions: the configured FOG API user must be allowed to read multicast
+  session resources.
+- Side effects: none.
+- Error cases: standard FOG authentication/authorization and transport errors;
+  malformed or missing collections normalize to an empty list.
+- Evidence: `Route::active('multicastsession')` in
+  `fogproject/packages/web/lib/pages/taskmanagementpage.class.php`, the
+  `multicastsession` branch of `Route::getter` in
+  `fogproject/packages/web/lib/router/route.class.php`, and
+  `fogproject/packages/web/lib/fog/multicastsession.class.php`.
+- Limitation: this read does not expose multicast creation or cancellation in
+  Foggy. Those lifecycle mutations still require a separate source trace and
+  confirmation design.
+
 ### API status
 
 - Call: `GET /system/info` (`GET /system/status` is routed identically)

@@ -42,6 +42,26 @@ function rawSnapin(overrides = {}) {
   };
 }
 
+test('active multicast sessions use the current endpoint and return normalized data', async () => {
+  const client = {
+    async get(path) {
+      assert.equal(path, 'multicastsession/current');
+      return {
+        multicastsessions: [{
+          id: '3', name: 'Lab', percent: '42', sessclients: '8',
+          image: { id: '4', name: 'Windows 11' },
+          state: { id: '3', name: 'In Progress' },
+        }],
+      };
+    },
+  };
+
+  const sessions = await createResources(client).multicast.listActive();
+  assert.equal(sessions.length, 1);
+  assert.equal(sessions[0].progress, 42);
+  assert.equal(sessions[0].clientCount, 8);
+});
+
 test('Snapin definition validation rejects paths and FOG-reserved filenames', () => {
   assert.deepEqual(validateSnapinDefinition({
     name: 'Agent', file: 'agent.msi', packageType: '0', timeoutSeconds: '300',
