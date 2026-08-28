@@ -1,6 +1,6 @@
 {
   "name": "foggy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A modern, task-focused management frontend for FOG Project 1.5.x",
   "type": "module",

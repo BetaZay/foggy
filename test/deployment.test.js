@@ -12,6 +12,16 @@ test('systemd unit runs unprivileged with external state and hardening', async (
   assert.doesNotMatch(unit, /FOG_API_TOKEN|fog-api-token|fog-user-token/);
 });
 
+test('service installer prints a clickable setup URL using the local address and configured port', async () => {
+  const installer = await readFile('scripts/install-service.sh', 'utf8');
+  assert.match(installer, /ip -4 route get/);
+  assert.match(installer, /hostname -I/);
+  assert.match(installer, /PORT=.*foggy[.]env|foggy[.]env.*PORT=/s);
+  assert.match(installer, /SETUP_URL="http:\/\/\$\(detect_local_ipv4\):\$SERVICE_PORT\/"/);
+  assert.match(installer, /\\033\]8;;%s/);
+  assert.doesNotMatch(installer, /<server-address>/);
+});
+
 test('service updater requires checksums remotely and includes rollback health checks', async () => {
   const updater = await readFile('scripts/update-service.sh', 'utf8');
   assert.match(updater, /checksum is required for remote updates/i);

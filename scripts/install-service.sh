@@ -13,6 +13,40 @@ CONFIG_DIR="${FOGGY_CONFIG_DIR:-/etc/foggy}"
 UNIT_DIR="${FOGGY_SYSTEMD_UNIT_DIR:-/etc/systemd/system}"
 NO_START=0
 SKIP_DEPENDENCIES=0
+
+detect_local_ipv4() {
+  local address=""
+
+  if command -v ip >/dev/null 2>&1; then
+    address="$(
+      ip -4 route get 1.1.1.1 2>/dev/null |
+        awk '{ for (field = 1; field <= NF; field++) if ($field == "src") { print $(field + 1); exit } }'
+    )"
+  fi
+  if [[ -z "$address" ]] && command -v hostname >/dev/null 2>&1; then
+    address="$(
+      hostname -I 2>/dev/null |
+        awk '{ for (field = 1; field <= NF; field++) if ($field ~ /^[0-9]+([.][0-9]+){3}$/ && $field !~ /^127[.]/) { print $field; exit } }'
+    )"
+  fi
+
+  if [[ "$address" =~ ^[0-9]+([.][0-9]+){3}$ ]]; then
+    printf '%s' "$address"
+  else
+    printf 'localhost'
+  fi
+}
+
+print_setup_link() {
+  local url="$1"
+
+  if [[ -t 1 && "${TERM:-dumb}" != "dumb" ]]; then
+    printf 'Foggy is running. Open \033]8;;%s\033\\%s\033]8;;\033\\ to finish setup.\n' "$url" "$url"
+  else
+    printf 'Foggy is running. Open %s to finish setup.\n' "$url"
+  fi
+}
+
 for option in "$@"; do
   case "$option" in
     --no-start) NO_START=1 ;;
@@ -98,7 +132,12 @@ ln -sfnT "$RELEASE_DIR" "$INSTALL_ROOT/current"
 systemctl daemon-reload
 if (( NO_START == 0 )); then
   systemctl enable --now foggy.service
-  echo "Foggy is running. Open http://<server-address>:7400/ to finish setup."
+  SERVICE_PORT="$(awk -F= '/^[[:space:]]*PORT=/{ value=$2 } END { gsub(/[[:space:]]/, "", value); print value }' "$CONFIG_DIR/foggy.env")"
+  if [[ ! "$SERVICE_PORT" =~ ^[0-9]+$ ]] || (( SERVICE_PORT < 1 || SERVICE_PORT > 65535 )); then
+    SERVICE_PORT=7400
+  fi
+  SETUP_URL="http://$(detect_local_ipv4):$SERVICE_PORT/"
+  print_setup_link "$SETUP_URL"
 else
   echo "Foggy installed without starting (--no-start)."
 fi
