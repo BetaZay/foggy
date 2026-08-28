@@ -35,9 +35,40 @@ sudo ./foggy-0.1.0/scripts/install-service.sh --skip-dependencies
 The installer still validates Node 22+, npm, systemd, and the required system
 utilities before changing the service.
 
-## Build a release
+## Install the latest release
 
-From a clean Foggy checkout:
+On a supported systemd distribution, install the latest published Foggy
+release with:
+
+```sh
+curl -fsSL https://github.com/BetaZay/foggy/releases/latest/download/install-foggy.sh | sudo bash
+```
+
+The release-hosted bootstrap discovers the latest GitHub Release, downloads its
+versioned archive and checksum over HTTPS, validates the checksum and archive
+paths, and delegates to the service installer described below. It accepts the
+same options as `install-service.sh`; for example:
+
+```sh
+curl -fsSL https://github.com/BetaZay/foggy/releases/latest/download/install-foggy.sh | sudo bash -s -- --no-start
+```
+
+Review the script before piping it to a privileged shell when required by local
+policy. The fully manual verified installation remains available below.
+
+## Publish or build a release
+
+Pushing a `v<package-version>` tag runs `.github/workflows/release.yml`. The
+workflow rejects a tag that differs from `package.json`, runs the service checks
+and tested production build, and publishes the archive, checksum, installer,
+and generated notes as a GitHub Release. For example:
+
+```sh
+npm version patch
+git push origin main --follow-tags
+```
+
+To build the same archive locally, use a clean Foggy checkout:
 
 ```sh
 npm run release
@@ -56,7 +87,7 @@ file, service templates, documentation, and installation/update scripts. It
 does not contain `.env`, configured FOG servers, sessions, the linked FOG source,
 development caches, or `node_modules`.
 
-## Install
+## Manual install
 
 Copy the archive to the server, verify it, extract it, and run the installer:
 

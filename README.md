@@ -131,6 +131,33 @@ server/user identity, CSRF data, and timestamps—not FOG tokens or passwords.
 
 ## Production release
 
+Install the latest published release on a supported systemd Linux distribution
+with one command:
+
+```sh
+curl -fsSL https://github.com/BetaZay/foggy/releases/latest/download/install-foggy.sh | sudo bash
+```
+
+The bootstrap downloads the latest versioned archive and its checksum from the
+same GitHub release, verifies the archive, rejects unsafe paths, and then runs
+the normal distro-aware service installer. Review the downloaded script before
+running it when required by local policy.
+
+Maintainers publish a release by updating `package.json` and `package-lock.json`
+to the same version, committing the change, and pushing the matching tag:
+
+```sh
+npm version patch
+git push origin main --follow-tags
+```
+
+The tag must exactly match `v<package-version>`. GitHub Actions reruns the tests,
+production build, and service checks before publishing the archive, checksum,
+generated release notes, and bootstrap installer. A failed check creates no
+GitHub Release.
+
+### Local release build
+
 Create a production archive from a checkout:
 
 ```sh

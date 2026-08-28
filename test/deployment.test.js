@@ -29,3 +29,25 @@ test('dependency bootstrap supports target distributions and verifies official N
   assert.match(installer, /SHASUMS256[.]txt/);
   assert.match(installer, /sha256sum --check --strict/);
 });
+
+test('one-command installer downloads the latest release and verifies it before extraction', async () => {
+  const installer = await readFile('scripts/install-foggy.sh', 'utf8');
+  assert.match(installer, /releases\/latest/);
+  assert.match(installer, /releases\/download\/\$TAG/);
+  assert.match(installer, /--proto '=https'/);
+  assert.match(installer, /EXPECTED_SHA256/);
+  assert.match(installer, /ACTUAL_SHA256/);
+  assert.match(installer, /Unsafe path found in release archive/);
+  assert.match(installer, /install-service[.]sh/);
+});
+
+test('release workflow requires a package-matching tag and publishes verified assets', async () => {
+  const workflow = await readFile('.github/workflows/release.yml', 'utf8');
+  assert.match(workflow, /tags:\s*\n\s*- ["']v\*[.]\*[.]\*["']/);
+  assert.match(workflow, /contents: write/);
+  assert.match(workflow, /GITHUB_REF_NAME.*v\$version/);
+  assert.match(workflow, /npm run release/);
+  assert.match(workflow, /foggy-\$version[.]tar[.]gz[.]sha256/);
+  assert.match(workflow, /scripts\/install-foggy[.]sh/);
+  assert.match(workflow, /--verify-tag/);
+});

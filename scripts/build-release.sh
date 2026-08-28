@@ -43,7 +43,7 @@ printf '{\n  "version": "%s",\n  "commit": "%s",\n  "builtAt": "%s"\n}\n' \
   "$VERSION" "$COMMIT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$RELEASE_DIR/release-manifest.json"
 
 tar -C "$STAGING_DIR" -czf "$ARCHIVE" "foggy-$VERSION"
-sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+(cd "$OUTPUT_DIR" && sha256sum "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256")
 
 echo "Created $ARCHIVE"
 echo "Checksum: $ARCHIVE.sha256"
