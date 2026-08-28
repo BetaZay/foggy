@@ -1,5 +1,7 @@
 # Foggy
 
+[![CI](https://github.com/BetaZay/foggy/actions/workflows/ci.yml/badge.svg)](https://github.com/BetaZay/foggy/actions/workflows/ci.yml)
+
 Foggy is a modern, standalone management frontend for FOG Project 1.5.x. It
 keeps FOG as the imaging engine—PXE, FOS, storage nodes, Partclone, multicast,
 task processing, and FOG Client—and replaces the day-to-day management
@@ -94,6 +96,14 @@ npm start               # Production Express process
 npm run service:check   # Validate deployment shell syntax
 npm run release         # Tested, checksummed release archive
 ```
+
+## Continuous integration
+
+GitHub Actions runs the locked dependency install, complete test suite,
+production asset build, and deployment shell validation on Node.js 22 and 24.
+The workflow runs for pushes to `main`, pull requests, and manual dispatches.
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the exact quality
+gates.
 
 ## Configuration
 
