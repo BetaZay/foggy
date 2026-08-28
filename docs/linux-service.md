@@ -106,6 +106,14 @@ The installer:
 - enables the root-owned `foggy-update.path` handler for authenticated update
   requests from the application.
 
+Running the installer over an existing installation replaces both systemd unit
+definitions, reloads systemd, and explicitly restarts `foggy.service` and the
+`foggy-update.path` watcher. This also makes the one-command installer a repair
+path when an earlier in-app update rolled back. The installer waits for
+`/healthz` and prints service diagnostics instead of reporting success if the
+new process does not become ready. `--no-start` updates the units without
+starting or restarting Foggy.
+
 The default service listens on `0.0.0.0:7400`. Open
 `http://<server-address>:7400/` to add the first FOG server. For an exposed or
 multi-user installation, place Foggy behind an HTTPS reverse proxy and restrict
@@ -196,9 +204,14 @@ sudo foggy-update \
 Remote updates without a checksum are refused. The updater rejects unsafe
 archive paths, installs dependencies into a new versioned directory, validates
 the server entry point, updates the service definition, atomically switches the
-`current` link, and restarts Foggy. It waits for both systemd and `/healthz`.
-If the new release fails the health check, the application link and service unit
-are rolled back and the prior service is restarted.
+`current` link, and performs an explicit stop/start of Foggy. It waits for both
+systemd and `/healthz` using the configured `HOST` and `PORT`, with a bounded
+probe timeout. If the new release fails the health check, the updater prints the
+service state and recent Foggy journal entries, restores the application link
+and service unit, starts the prior release, and verifies rollback health.
+Foggy closes idle HTTP connections when systemd requests shutdown and forcibly
+ends any remaining connections after ten seconds, keeping service restarts
+within systemd's stop timeout.
 
 Dependency installation uses an update-local npm cache under the service's
 private temporary directory. It does not depend on `/root/.npm`, which is hidden

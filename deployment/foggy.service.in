@@ -14,6 +14,7 @@ ExecStart=@NODE@ @INSTALL_ROOT@/current/src/server.js
 Restart=on-failure
 RestartSec=3s
 TimeoutStopSec=30s
+KillMode=mixed
 UMask=0077
 
 # Foggy needs network access and private state, but not a writable application tree.

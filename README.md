@@ -200,6 +200,9 @@ archive, verifies it against Node.js's published `SHASUMS256.txt`, and installs
 it under `/opt/nodejs`. Pass `--skip-dependencies` when the operating system is
 managed separately.
 
+Re-running the installer updates the Foggy and update-handler units, reloads
+systemd, and explicitly restarts the web service and update path watcher.
+
 The service installation uses:
 
 ```text
@@ -253,10 +256,11 @@ sudo foggy-update \
 ```
 
 The updater installs into a new versioned directory, atomically changes the
-active release, updates the service definition, restarts Foggy, and verifies
-systemd plus `/healthz`. A failed health check restores the previous application
-and service unit. Configuration, credentials, and sessions remain outside the
-release and survive upgrades.
+active release, updates the service definition, performs an explicit stop/start,
+and verifies systemd plus `/healthz` at the configured address. A failed health
+check prints focused service diagnostics, restores the previous application and
+service unit, restarts it, and verifies rollback health. Configuration,
+credentials, and sessions remain outside the release and survive upgrades.
 
 Full installation, update, rollback, and operating notes are in
 [`docs/linux-service.md`](docs/linux-service.md).

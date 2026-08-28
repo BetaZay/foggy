@@ -47,6 +47,43 @@ print_setup_link() {
   fi
 }
 
+read_service_setting() {
+  local key="$1"
+  local fallback="$2"
+  local value
+
+  value="$(awk -F= -v key="$key" '
+    $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
+      value=substr($0, index($0, "=") + 1)
+    }
+    END {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+      gsub(/^\047|\047$/, "", value)
+      gsub(/^\042|\042$/, "", value)
+      print value
+    }
+  ' "$CONFIG_DIR/foggy.env" 2>/dev/null || true)"
+  printf '%s' "${value:-$fallback}"
+}
+
+wait_for_service_health() {
+  local deadline=$((SECONDS + 60))
+
+  while (( SECONDS < deadline )); do
+    if systemctl is-active --quiet foggy.service && node -e '
+      const [host, port] = process.argv.slice(1);
+      const address = host.includes(":") ? `[${host.replace(/^\[|\]$/g, "")}]` : host;
+      fetch(`http://${address}:${port}/healthz`, { signal: AbortSignal.timeout(2000) })
+        .then((response) => process.exit(response.ok ? 0 : 1))
+        .catch(() => process.exit(1));
+    ' "$SERVICE_HEALTH_HOST" "$SERVICE_PORT"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 for option in "$@"; do
   case "$option" in
     --no-start) NO_START=1 ;;
@@ -151,10 +188,25 @@ done
 ln -sfnT "$RELEASE_DIR" "$INSTALL_ROOT/current"
 systemctl daemon-reload
 if (( NO_START == 0 )); then
-  systemctl enable --now foggy.service foggy-update.path
-  SERVICE_PORT="$(awk -F= '/^[[:space:]]*PORT=/{ value=$2 } END { gsub(/[[:space:]]/, "", value); print value }' "$CONFIG_DIR/foggy.env")"
+  # `enable --now` does not restart an already-active unit. Enable first, then
+  # explicitly restart both runtime units so a repair install cannot leave the
+  # old process or path watcher using superseded release definitions.
+  systemctl enable foggy.service foggy-update.path
+  systemctl restart foggy.service
+  systemctl restart foggy-update.path
+  SERVICE_PORT="$(read_service_setting PORT 7400)"
   if [[ ! "$SERVICE_PORT" =~ ^[0-9]+$ ]] || (( SERVICE_PORT < 1 || SERVICE_PORT > 65535 )); then
     SERVICE_PORT=7400
+  fi
+  SERVICE_HEALTH_HOST="$(read_service_setting HOST 127.0.0.1)"
+  case "$SERVICE_HEALTH_HOST" in
+    0.0.0.0|::|'[::]') SERVICE_HEALTH_HOST=127.0.0.1 ;;
+  esac
+  if ! wait_for_service_health; then
+    echo "Foggy did not become healthy after installation." >&2
+    systemctl status foggy.service --no-pager >&2 || true
+    journalctl -u foggy.service -n 50 --no-pager >&2 || true
+    exit 1
   fi
   SETUP_URL="http://$(detect_local_ipv4):$SERVICE_PORT/"
   print_setup_link "$SETUP_URL"

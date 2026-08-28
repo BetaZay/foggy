@@ -21,6 +21,7 @@ WORK_DIR="$(mktemp -d)"
 ARCHIVE="$WORK_DIR/release.tar.gz"
 RELEASE_DIR=""
 RELEASE_ACTIVATED=0
+HEALTH_TIMEOUT_SECONDS="${FOGGY_UPDATE_HEALTH_TIMEOUT_SECONDS:-60}"
 
 cleanup() {
   rm -rf -- "$WORK_DIR"
@@ -31,6 +32,58 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
+
+read_service_setting() {
+  local key="$1"
+  local fallback="$2"
+  local value
+
+  value="$(awk -F= -v key="$key" '
+    $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
+      value=substr($0, index($0, "=") + 1)
+    }
+    END {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+      gsub(/^\047|\047$/, "", value)
+      gsub(/^\042|\042$/, "", value)
+      print value
+    }
+  ' "$CONFIG_FILE" 2>/dev/null || true)"
+  printf '%s' "${value:-$fallback}"
+}
+
+start_foggy_service() {
+  systemctl daemon-reload
+  systemctl reset-failed foggy.service >/dev/null 2>&1 || true
+  systemctl start foggy.service
+}
+
+wait_for_foggy_health() {
+  local deadline=$((SECONDS + HEALTH_TIMEOUT_SECONDS))
+
+  while (( SECONDS < deadline )); do
+    if systemctl is-active --quiet foggy.service && node -e '
+      const [host, port] = process.argv.slice(1);
+      const address = host.includes(":") ? `[${host.replace(/^\[|\]$/g, "")}]` : host;
+      fetch(`http://${address}:${port}/healthz`, { signal: AbortSignal.timeout(2000) })
+        .then((response) => process.exit(response.ok ? 0 : 1))
+        .catch(() => process.exit(1));
+    ' "$HEALTH_HOST" "$PORT"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+report_foggy_failure() {
+  echo "foggy.service state after failed startup:" >&2
+  systemctl show foggy.service \
+    --property=LoadState,ActiveState,SubState,Result,ExecMainCode,ExecMainStatus \
+    --no-pager >&2 || true
+  echo "Recent foggy.service journal entries:" >&2
+  journalctl -u foggy.service -n 50 --no-pager >&2 || true
+}
 
 case "$SOURCE" in
   http://*|https://*)
@@ -117,32 +170,39 @@ sed -e "s|@NODE@|$NODE_BIN|g" -e "s|@INSTALL_ROOT@|$INSTALL_ROOT|g" \
   -e "s|@STATE_DIR@|$STATE_DIR|g" -e "s|@CONFIG_DIR@|$CONFIG_DIR|g" \
   "$RELEASE_DIR/deployment/foggy.service.in" > "$UNIT_TEMP"
 install -m 0644 -o root -g root "$UNIT_TEMP" "$UNIT_DIR/foggy.service"
-systemctl daemon-reload
-systemctl restart foggy.service
+PORT="$(read_service_setting PORT 7400)"
+[[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) || PORT=7400
+HEALTH_HOST="$(read_service_setting HOST 127.0.0.1)"
+case "$HEALTH_HOST" in
+  0.0.0.0|::|'[::]') HEALTH_HOST=127.0.0.1 ;;
+esac
+[[ "$HEALTH_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] && (( HEALTH_TIMEOUT_SECONDS >= 5 )) || HEALTH_TIMEOUT_SECONDS=60
 
-PORT="$(awk -F= '/^[[:space:]]*PORT=/{value=$2} END{gsub(/[[:space:]]/, "", value); print value}' "$CONFIG_FILE" 2>/dev/null || true)"
-[[ "$PORT" =~ ^[0-9]+$ ]] || PORT=7400
-HEALTHY=0
-for _ in $(seq 1 30); do
-  if systemctl is-active --quiet foggy.service && \
-      node -e "fetch('http://127.0.0.1:$PORT/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
-    HEALTHY=1
-    break
-  fi
-  sleep 1
-done
+# Stop explicitly before changing process generations. This avoids treating a
+# still-stopping old process as the newly activated release.
+systemctl stop foggy.service
+start_foggy_service
 
-if (( HEALTHY == 0 )); then
+if ! wait_for_foggy_health; then
   echo "Foggy $VERSION failed its health check; rolling back." >&2
+  report_foggy_failure
   if [[ -n "$OLD_RELEASE" && -d "$OLD_RELEASE" ]]; then
+    systemctl stop foggy.service || true
     rm -f -- "$NEW_LINK"
     ln -s "$OLD_RELEASE" "$NEW_LINK"
     mv -Tf "$NEW_LINK" "$INSTALL_ROOT/current"
     if [[ -f "$OLD_UNIT" ]]; then
       install -m 0644 -o root -g root "$OLD_UNIT" "$UNIT_DIR/foggy.service"
-      systemctl daemon-reload
     fi
-    systemctl restart foggy.service
+    start_foggy_service
+    if wait_for_foggy_health; then
+      echo "Rollback restored $OLD_RELEASE and foggy.service is healthy." >&2
+    else
+      echo "Rollback restored $OLD_RELEASE, but foggy.service is still unhealthy." >&2
+      report_foggy_failure
+    fi
+  else
+    echo "No previous release was available for rollback." >&2
   fi
   exit 1
 fi
@@ -156,7 +216,8 @@ for update_unit in foggy-update.path foggy-update.service; do
   chmod 0644 "$UNIT_DIR/$update_unit"
 done
 systemctl daemon-reload
-systemctl enable --now foggy-update.path
+systemctl enable foggy-update.path
+systemctl restart foggy-update.path
 
 echo "Foggy updated to $VERSION ($RELEASE_DIR)."
 echo "Previous releases were retained for manual rollback or cleanup."

@@ -9,7 +9,16 @@ test('systemd unit runs unprivileged with external state and hardening', async (
   assert.match(unit, /^PrivateTmp=true$/m);
   assert.match(unit, /^ProtectSystem=strict$/m);
   assert.match(unit, /^ReadWritePaths=@STATE_DIR@$/m);
+  assert.match(unit, /^KillMode=mixed$/m);
   assert.doesNotMatch(unit, /FOG_API_TOKEN|fog-api-token|fog-user-token/);
+});
+
+test('server shutdown closes idle connections and has a bounded forced exit', async () => {
+  const server = await readFile('src/server.js', 'utf8');
+  assert.match(server, /server[.]closeIdleConnections/);
+  assert.match(server, /server[.]closeAllConnections/);
+  assert.match(server, /10_000/);
+  assert.match(server, /shuttingDown/);
 });
 
 test('service installer prints a clickable setup URL using the local address and configured port', async () => {
@@ -19,6 +28,13 @@ test('service installer prints a clickable setup URL using the local address and
   assert.match(installer, /PORT=.*foggy[.]env|foggy[.]env.*PORT=/s);
   assert.match(installer, /SETUP_URL="http:\/\/\$\(detect_local_ipv4\):\$SERVICE_PORT\/"/);
   assert.match(installer, /\\033\]8;;%s/);
+  assert.match(installer, /systemctl enable foggy[.]service foggy-update[.]path/);
+  assert.match(installer, /systemctl restart foggy[.]service/);
+  assert.match(installer, /systemctl restart foggy-update[.]path/);
+  assert.match(installer, /wait_for_service_health/);
+  assert.match(installer, /AbortSignal[.]timeout\(2000\)/);
+  assert.match(installer, /journalctl -u foggy[.]service/);
+  assert.doesNotMatch(installer, /enable --now foggy[.]service/);
   assert.doesNotMatch(installer, /<server-address>/);
 });
 
@@ -32,6 +48,14 @@ test('service updater requires checksums remotely and includes rollback health c
   assert.match(updater, /npm ci[^\n]+--cache "\$WORK_DIR\/npm-cache"/);
   assert.match(updater, /RELEASE_ACTIVATED/);
   assert.match(updater, /"\$INSTALL_ROOT\/releases\/"\*/);
+  assert.match(updater, /systemctl stop foggy[.]service/);
+  assert.match(updater, /systemctl reset-failed foggy[.]service/);
+  assert.match(updater, /AbortSignal[.]timeout\(2000\)/);
+  assert.match(updater, /read_service_setting HOST/);
+  assert.match(updater, /systemctl show foggy[.]service/);
+  assert.match(updater, /journalctl -u foggy[.]service/);
+  assert.match(updater, /Rollback restored.*healthy/);
+  assert.match(updater, /systemctl restart foggy-update[.]path/);
 });
 
 test('built-in update bridge is fixed-source, checksum-gated, and root-owned', async () => {
