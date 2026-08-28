@@ -33,7 +33,7 @@ function renderServerForm(request, response, options = {}) {
     errors: options.errors || {},
     formError: options.formError || '',
     cancelHref: request.session ? '/' : '/login',
-    preAuthCsrfToken: issueServerConfigCsrf(request, response),
+    preAuthCsrfToken: issueServerConfigCsrf(),
     modal,
   });
 }

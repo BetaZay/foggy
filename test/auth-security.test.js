@@ -8,6 +8,7 @@ import {
   requireLoginCsrf,
   requireServerConfigCsrf,
   safeReturnTo,
+  verifyServerConfigCsrf,
 } from '../src/auth/security.js';
 import { privateCookieOptions } from '../src/lib/cookies.js';
 
@@ -68,17 +69,27 @@ test('login CSRF uses the HttpOnly challenge cookie and safe redirects stay loca
 test('server configuration uses a separate pre-auth CSRF challenge', () => {
   const response = responseDouble();
   const loginToken = issuePreAuthCsrf(request(), response);
-  const serverToken = issueServerConfigCsrf(request(), response);
+  const issuedAt = Date.now();
+  const serverToken = issueServerConfigCsrf(issuedAt);
   assert.notEqual(loginToken, serverToken);
-  assert.deepEqual(response.cookies.map(({ name }) => name), ['foggy_login_csrf', 'foggy_server_csrf']);
+  assert.deepEqual(response.cookies.map(({ name }) => name), ['foggy_login_csrf']);
+  assert.equal(verifyServerConfigCsrf(serverToken, issuedAt + 60_000), true);
+  assert.equal(verifyServerConfigCsrf(serverToken, issuedAt + 10 * 60 * 1000 + 1), false);
+  assert.equal(verifyServerConfigCsrf(`${serverToken}tampered`, issuedAt + 60_000), false);
 
   let continued = false;
   const valid = request({
     body: { _csrf: serverToken },
-    get: (name) => ({ cookie: `foggy_server_csrf=${serverToken}; foggy_login_csrf=${loginToken}`, origin: 'http://foggy.test', host: 'foggy.test' })[name] || '',
+    get: (name) => ({ cookie: `foggy_login_csrf=${loginToken}`, origin: 'http://foggy.test', host: 'foggy.test' })[name] || '',
   });
   requireServerConfigCsrf(valid, responseDouble(), () => { continued = true; });
   assert.equal(continued, true);
+});
+
+test('empty CSRF values never validate', () => {
+  let continued = false;
+  requireCsrf(request({ body: {}, session: { csrfToken: '' } }), responseDouble(), () => { continued = true; });
+  assert.equal(continued, false);
 });
 
 test('authenticated session cookies are persistent and browser-protected', () => {
