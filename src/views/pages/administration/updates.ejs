@@ -1,0 +1,46 @@
+<%- include('../../layouts/app-start') %>
+<%- include('../../components/page-header', { eyebrow: 'Administration', heading: 'Updates', description: 'Check the published Foggy release and safely request an in-place service update.', action: '' }) %>
+
+<% if (requested) { %>
+  <%- include('../../components/alert', { tone: 'success', heading: 'Update queued:', message: 'The system update handler accepted the request. Foggy will restart if a newer release is installed.' }) %>
+<% } %>
+<% if (formError) { %>
+  <%- include('../../components/alert', { tone: 'warning', heading: 'Update not queued:', message: formError }) %>
+<% } %>
+
+<div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.7fr)]">
+  <section class="panel p-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div><h2 class="text-base font-semibold text-ink-950">Release status</h2><p class="mt-1 text-sm text-stone-500">Versions use year.month.action-number.</p></div>
+      <% if (status.updateAvailable) { %><span class="badge-warning">Update available</span><% } else if (status.latest && !status.checkError) { %><span class="badge-success">Up to date</span><% } %>
+    </div>
+    <dl class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-xl bg-stone-50 p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Installed</dt><dd class="mt-1 font-mono text-lg font-semibold text-ink-950"><%= status.currentVersion %></dd></div>
+      <div class="rounded-xl bg-stone-50 p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Latest</dt><dd class="mt-1 font-mono text-lg font-semibold text-ink-950"><%= status.latest?.version || 'Unavailable' %></dd></div>
+    </dl>
+    <% if (status.checkError) { %><p class="mt-4 text-sm text-amber-800"><%= status.checkError %></p><% } %>
+    <% if (status.latest) { %><a class="button-secondary mt-5" href="<%= status.latest.url %>" target="_blank" rel="noreferrer">View release notes</a><% } %>
+  </section>
+
+  <section class="panel p-6">
+    <h2 class="text-base font-semibold text-ink-950">Update handler</h2>
+    <% if (!status.enabled) { %>
+      <p class="mt-3 text-sm leading-6 text-stone-600">Built-in updates are disabled. They are enabled automatically by the Foggy systemd installer; development checkouts remain read-only.</p>
+    <% } else if (status.agentStatus && ['checking', 'downloading', 'installing'].includes(status.agentStatus.state)) { %>
+      <div class="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900"><strong>Update in progress.</strong> <%= status.agentStatus.message %></div>
+    <% } else if (status.updateAvailable) { %>
+      <p class="mt-3 text-sm leading-6 text-stone-600">Foggy will download the fixed latest GitHub release, verify its checksum, update the service, and run a health check. A failed health check rolls back automatically.</p>
+      <form method="post" action="/administration/updates" class="mt-5 space-y-4">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div><label class="form-label" for="update-confirmation">Enter <strong>UPDATE</strong> to confirm</label><input class="form-input mt-1" id="update-confirmation" name="confirmation" autocomplete="off" required></div>
+        <button class="button-primary" type="submit">Install <%= status.latest.version %></button>
+      </form>
+    <% } else {
+      const last = status.agentStatus;
+    %>
+      <p class="mt-3 text-sm leading-6 text-stone-600"><%= last?.message || 'No newer verified release is currently available.' %></p>
+    <% } %>
+    <% if (status.agentStatus?.updatedAt) { %><p class="mt-4 text-xs text-stone-400">Handler updated <%= formatDate(status.agentStatus.updatedAt) %></p><% } %>
+  </section>
+</div>
+<%- include('../../layouts/app-end') %>

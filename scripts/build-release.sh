@@ -17,7 +17,12 @@ if (( NODE_MAJOR < 22 )); then
   exit 1
 fi
 
-VERSION="$(node -p "require('./package.json').version")"
+SOURCE_VERSION="$(node -p "require('./package.json').version")"
+VERSION="${FOGGY_RELEASE_VERSION:-$SOURCE_VERSION}"
+if [[ ! "$VERSION" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+  echo "Invalid Foggy release version: $VERSION" >&2
+  exit 1
+fi
 COMMIT="$(git rev-parse --verify HEAD 2>/dev/null || printf 'unknown')"
 if [[ -n "$(git status --porcelain --untracked-files=normal 2>/dev/null || true)" ]]; then
   COMMIT="$COMMIT-dirty"
@@ -39,6 +44,18 @@ mkdir -p "$RELEASE_DIR/public" "$OUTPUT_DIR"
 cp -R src docs deployment scripts "$RELEASE_DIR/"
 cp -R public/assets "$RELEASE_DIR/public/"
 cp package.json package-lock.json README.md .env.example "$RELEASE_DIR/"
+if [[ "$VERSION" != "$SOURCE_VERSION" ]]; then
+  node -e '
+    const fs = require("node:fs");
+    const version = process.argv[1];
+    for (const file of process.argv.slice(2)) {
+      const value = JSON.parse(fs.readFileSync(file, "utf8"));
+      value.version = version;
+      if (value.packages?.[""]) value.packages[""].version = version;
+      fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+    }
+  ' "$VERSION" "$RELEASE_DIR/package.json" "$RELEASE_DIR/package-lock.json"
+fi
 printf '{\n  "version": "%s",\n  "commit": "%s",\n  "builtAt": "%s"\n}\n' \
   "$VERSION" "$COMMIT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$RELEASE_DIR/release-manifest.json"
 

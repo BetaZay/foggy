@@ -1,0 +1,27 @@
+[Unit]
+Description=Install the latest verified Foggy release
+Documentation=file://@INSTALL_ROOT@/current/docs/linux-service.md
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=@STATE_DIR@/update-request.json
+
+[Service]
+Type=oneshot
+Environment=FOGGY_INSTALL_ROOT=@INSTALL_ROOT@
+Environment=FOGGY_STATE_DIR=@STATE_DIR@
+Environment=FOGGY_CONFIG_DIR=@CONFIG_DIR@
+Environment=FOGGY_SYSTEMD_UNIT_DIR=@UNIT_DIR@
+Environment=FOGGY_UPDATE_REQUEST_FILE=@STATE_DIR@/update-request.json
+Environment=FOGGY_UPDATE_STATUS_FILE=@STATE_DIR@/update-status.json
+ExecStart=/usr/local/sbin/foggy-update-latest
+UMask=0077
+PrivateTmp=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

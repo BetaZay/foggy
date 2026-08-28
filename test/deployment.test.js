@@ -28,6 +28,22 @@ test('service updater requires checksums remotely and includes rollback health c
   assert.match(updater, /\/healthz/);
   assert.match(updater, /rolling back/i);
   assert.match(updater, /OLD_RELEASE/);
+  assert.match(updater, /foggy-update[.]path/);
+});
+
+test('built-in update bridge is fixed-source, checksum-gated, and root-owned', async () => {
+  const agent = await readFile('scripts/update-latest.sh', 'utf8');
+  const pathUnit = await readFile('deployment/foggy-update.path.in', 'utf8');
+  const serviceUnit = await readFile('deployment/foggy-update.service.in', 'utf8');
+  assert.match(agent, /https:\/\/github[.]com\/BetaZay\/foggy/);
+  assert.match(agent, /releases\/latest/);
+  assert.match(agent, /EXPECTED_SHA256/);
+  assert.match(agent, /\/usr\/local\/sbin\/foggy-update/);
+  assert.doesNotMatch(agent, /REQUEST_FILE.*(source|cat)|source.*REQUEST_FILE/);
+  assert.match(pathUnit, /PathExists=@STATE_DIR@\/update-request[.]json/);
+  assert.match(serviceUnit, /Type=oneshot/);
+  assert.match(serviceUnit, /ExecStart=\/usr\/local\/sbin\/foggy-update-latest/);
+  assert.doesNotMatch(serviceUnit, /^User=foggy$/m);
 });
 
 test('dependency bootstrap supports target distributions and verifies official Node archives', async () => {
@@ -51,13 +67,14 @@ test('one-command installer downloads the latest release and verifies it before 
   assert.match(installer, /install-service[.]sh/);
 });
 
-test('release workflow requires a package-matching tag and publishes verified assets', async () => {
+test('release workflow generates CalVer tags and publishes verified assets', async () => {
   const workflow = await readFile('.github/workflows/release.yml', 'utf8');
-  assert.match(workflow, /tags:\s*\n\s*- ["']v\*[.]\*[.]\*["']/);
+  assert.match(workflow, /branches:\s*\n\s*- main/);
   assert.match(workflow, /contents: write/);
-  assert.match(workflow, /GITHUB_REF_NAME.*v\$version/);
+  assert.match(workflow, /date -u \+%Y.*date -u \+%-m.*GITHUB_RUN_NUMBER/);
+  assert.match(workflow, /FOGGY_RELEASE_VERSION/);
   assert.match(workflow, /npm run release/);
-  assert.match(workflow, /foggy-\$version[.]tar[.]gz[.]sha256/);
+  assert.match(workflow, /foggy-\$FOGGY_RELEASE_VERSION[.]tar[.]gz[.]sha256/);
   assert.match(workflow, /scripts\/install-foggy[.]sh/);
-  assert.match(workflow, /--verify-tag/);
+  assert.match(workflow, /--target "\$GITHUB_SHA"/);
 });

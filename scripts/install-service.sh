@@ -66,7 +66,7 @@ if (( SKIP_DEPENDENCIES == 0 )); then
   hash -r
 fi
 
-for command_name in node npm systemctl useradd groupadd getent install sed; do
+for command_name in node npm systemctl useradd groupadd getent install sed grep; do
   command -v "$command_name" >/dev/null 2>&1 || {
     echo "Required command not found: $command_name" >&2
     exit 1
@@ -115,10 +115,22 @@ if [[ ! -f "$CONFIG_DIR/foggy.env" ]]; then
     "FOGGY_CONFIG_FILE=$STATE_DIR/foggy.json" \
     "FOGGY_SESSION_FILE=$STATE_DIR/sessions.json" \
     'FOGGY_SESSION_TTL_MS=3600000' \
+    'FOGGY_UPDATES_ENABLED=true' \
+    "FOGGY_UPDATE_REQUEST_FILE=$STATE_DIR/update-request.json" \
+    "FOGGY_UPDATE_STATUS_FILE=$STATE_DIR/update-status.json" \
     'FOGGY_SNAPIN_UPLOAD_MAX_BYTES=2147483648' \
     'FOGGY_SNAPIN_UPLOAD_TIMEOUT_MS=1800000' > "$ENV_TEMP"
   install -m 0640 -o root -g foggy "$ENV_TEMP" "$CONFIG_DIR/foggy.env"
 fi
+for update_setting in \
+  'FOGGY_UPDATES_ENABLED=true' \
+  "FOGGY_UPDATE_REQUEST_FILE=$STATE_DIR/update-request.json" \
+  "FOGGY_UPDATE_STATUS_FILE=$STATE_DIR/update-status.json"; do
+  update_key="${update_setting%%=*}"
+  if ! grep -q "^[[:space:]]*$update_key=" "$CONFIG_DIR/foggy.env"; then
+    printf '%s\n' "$update_setting" >> "$CONFIG_DIR/foggy.env"
+  fi
+done
 
 UNIT_TEMP="$(mktemp)"
 trap 'rm -f -- "${ENV_TEMP:-}" "$UNIT_TEMP"' EXIT
@@ -127,11 +139,19 @@ sed -e "s|@NODE@|$NODE_BIN|g" -e "s|@INSTALL_ROOT@|$INSTALL_ROOT|g" \
   "$SOURCE_DIR/deployment/foggy.service.in" > "$UNIT_TEMP"
 install -m 0644 -o root -g root "$UNIT_TEMP" "$UNIT_DIR/foggy.service"
 install -m 0755 -o root -g root "$RELEASE_DIR/scripts/update-service.sh" /usr/local/sbin/foggy-update
+install -m 0755 -o root -g root "$RELEASE_DIR/scripts/update-latest.sh" /usr/local/sbin/foggy-update-latest
+for update_unit in foggy-update.path foggy-update.service; do
+  sed -e "s|@INSTALL_ROOT@|$INSTALL_ROOT|g" -e "s|@STATE_DIR@|$STATE_DIR|g" \
+    -e "s|@CONFIG_DIR@|$CONFIG_DIR|g" -e "s|@UNIT_DIR@|$UNIT_DIR|g" \
+    "$SOURCE_DIR/deployment/$update_unit.in" > "$UNIT_DIR/$update_unit"
+  chown root:root "$UNIT_DIR/$update_unit"
+  chmod 0644 "$UNIT_DIR/$update_unit"
+done
 
 ln -sfnT "$RELEASE_DIR" "$INSTALL_ROOT/current"
 systemctl daemon-reload
 if (( NO_START == 0 )); then
-  systemctl enable --now foggy.service
+  systemctl enable --now foggy.service foggy-update.path
   SERVICE_PORT="$(awk -F= '/^[[:space:]]*PORT=/{ value=$2 } END { gsub(/[[:space:]]/, "", value); print value }' "$CONFIG_DIR/foggy.env")"
   if [[ ! "$SERVICE_PORT" =~ ^[0-9]+$ ]] || (( SERVICE_PORT < 1 || SERVICE_PORT > 65535 )); then
     SERVICE_PORT=7400
@@ -139,6 +159,7 @@ if (( NO_START == 0 )); then
   SETUP_URL="http://$(detect_local_ipv4):$SERVICE_PORT/"
   print_setup_link "$SETUP_URL"
 else
+  systemctl enable foggy-update.path
   echo "Foggy installed without starting (--no-start)."
 fi
 echo "Environment: $CONFIG_DIR/foggy.env"

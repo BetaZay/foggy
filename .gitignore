@@ -4,6 +4,8 @@ fogproject
 !.env.example
 config/foggy.json
 config/sessions.json
+config/update-request.json
+config/update-status.json
 config/*.tmp
 node_modules/
 dist/

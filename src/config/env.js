@@ -18,6 +18,14 @@ function parsePort(name, fallback) {
   return port;
 }
 
+function parseBoolean(name, fallback = false) {
+  const value = process.env[name]?.trim().toLowerCase();
+  if (!value) return fallback;
+  if (['1', 'true', 'yes', 'on'].includes(value)) return true;
+  if (['0', 'false', 'no', 'off'].includes(value)) return false;
+  throw new Error(`${name} must be true or false`);
+}
+
 function parseFogConfig() {
   const name = process.env.FOG_SERVER_NAME?.trim();
   const baseUrl = process.env.FOG_BASE_URL?.trim();
@@ -64,6 +72,8 @@ function parseFogConfig() {
 
 const nodeEnv = process.env.NODE_ENV?.trim() || 'development';
 const fog = Object.freeze(parseFogConfig());
+const configFile = path.resolve(process.env.FOGGY_CONFIG_FILE?.trim() || 'config/foggy.json');
+const stateDirectory = path.dirname(configFile);
 
 export const env = Object.freeze({
   nodeEnv,
@@ -71,10 +81,13 @@ export const env = Object.freeze({
   host: process.env.HOST?.trim() || '0.0.0.0',
   port: parsePort('PORT', 7400),
   viteDevServer: process.env.VITE_DEV_SERVER?.trim() || '',
-  configFile: path.resolve(process.env.FOGGY_CONFIG_FILE?.trim() || 'config/foggy.json'),
+  configFile,
   sessionFile: path.resolve(process.env.FOGGY_SESSION_FILE?.trim() || 'config/sessions.json'),
   sessionTtlMs: parsePositiveInteger('FOGGY_SESSION_TTL_MS', 60 * 60 * 1000),
   snapinUploadMaxBytes: parsePositiveInteger('FOGGY_SNAPIN_UPLOAD_MAX_BYTES', 2 * 1024 * 1024 * 1024),
   snapinUploadTimeoutMs: parsePositiveInteger('FOGGY_SNAPIN_UPLOAD_TIMEOUT_MS', 30 * 60 * 1000),
+  updatesEnabled: parseBoolean('FOGGY_UPDATES_ENABLED'),
+  updateRequestFile: path.resolve(process.env.FOGGY_UPDATE_REQUEST_FILE?.trim() || path.join(stateDirectory, 'update-request.json')),
+  updateStatusFile: path.resolve(process.env.FOGGY_UPDATE_STATUS_FILE?.trim() || path.join(stateDirectory, 'update-status.json')),
   fog,
 });

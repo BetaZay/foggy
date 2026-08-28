@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { requireAuthentication } from './auth/security.js';
@@ -11,8 +12,11 @@ import { formatBytes, formatDate } from './lib/format.js';
 import { createPageRouter } from './routes/pages.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createServerRouter } from './routes/servers.js';
+import { createUpdateRouter } from './routes/updates.js';
+import { UpdateManager } from './updates/manager.js';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const packageVersion = JSON.parse(readFileSync(path.join(rootDirectory, 'package.json'), 'utf8')).version;
 
 export function healthCheck(req, res) {
   return res.status(200).json({ status: 'ok' });
@@ -21,6 +25,12 @@ export function healthCheck(req, res) {
 export function createApp({
   registry = new FogRegistry(new ConfigStore(env.configFile, { seed: env.fog })),
   sessions = new SessionStore({ ttlMs: env.sessionTtlMs, filePath: env.sessionFile }),
+  updates = new UpdateManager({
+    currentVersion: packageVersion,
+    enabled: env.updatesEnabled,
+    requestFile: env.updateRequestFile,
+    statusFile: env.updateStatusFile,
+  }),
 } = {}) {
   const app = express();
   const fogContext = createFogContext(registry, sessions);
@@ -47,6 +57,7 @@ export function createApp({
   app.use(createAuthRouter(registry, sessions));
   app.use(createServerRouter(registry, sessions));
   app.use(requireAuthentication);
+  app.use(createUpdateRouter(updates));
   app.use(createPageRouter(fogContext.fog));
 
   app.use((req, res) => {

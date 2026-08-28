@@ -65,6 +65,18 @@ for required in package.json package-lock.json release-manifest.json public/asse
   [[ -f "$SOURCE_DIR/$required" ]] || { echo "Invalid release: missing $required" >&2; exit 1; }
 done
 
+if [[ -f "$CONFIG_FILE" ]]; then
+  for update_setting in \
+    'FOGGY_UPDATES_ENABLED=true' \
+    "FOGGY_UPDATE_REQUEST_FILE=$STATE_DIR/update-request.json" \
+    "FOGGY_UPDATE_STATUS_FILE=$STATE_DIR/update-status.json"; do
+    update_key="${update_setting%%=*}"
+    if ! grep -q "^[[:space:]]*$update_key=" "$CONFIG_FILE"; then
+      printf '%s\n' "$update_setting" >> "$CONFIG_FILE"
+    fi
+  done
+fi
+
 NODE_MAJOR="$(node -p "Number(process.versions.node.split('.')[0])")"
 (( NODE_MAJOR >= 22 )) || { echo "Foggy requires Node.js 22 or newer." >&2; exit 1; }
 VERSION="$(node -p "require('$SOURCE_DIR/package.json').version")"
@@ -122,6 +134,17 @@ if (( HEALTHY == 0 )); then
   fi
   exit 1
 fi
+
+install -m 0755 -o root -g root "$RELEASE_DIR/scripts/update-latest.sh" /usr/local/sbin/foggy-update-latest
+for update_unit in foggy-update.path foggy-update.service; do
+  sed -e "s|@INSTALL_ROOT@|$INSTALL_ROOT|g" -e "s|@STATE_DIR@|$STATE_DIR|g" \
+    -e "s|@CONFIG_DIR@|$CONFIG_DIR|g" -e "s|@UNIT_DIR@|$UNIT_DIR|g" \
+    "$RELEASE_DIR/deployment/$update_unit.in" > "$UNIT_DIR/$update_unit"
+  chown root:root "$UNIT_DIR/$update_unit"
+  chmod 0644 "$UNIT_DIR/$update_unit"
+done
+systemctl daemon-reload
+systemctl enable --now foggy-update.path
 
 echo "Foggy updated to $VERSION ($RELEASE_DIR)."
 echo "Previous releases were retained for manual rollback or cleanup."

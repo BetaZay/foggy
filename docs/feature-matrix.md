@@ -112,6 +112,7 @@ Status values:
 | FOG users and roles | User is intentionally absent from generic API allowlist | Extension required | Foggy account management and FOG account management are separate concerns. |
 | PXE/iPXE and boot menu | `/ipxe`, `/pxemenuoptions`, settings | Trace required | Admin-only and high impact; use narrow schemas rather than arbitrary setting writes. |
 | Global settings and client services | `/service` maps the global settings table | Trace required | Generic access is too broad for direct UI exposure. Build named, validated settings operations. |
+| Foggy application updates | Foggy-owned systemd path/service bridge and verified GitHub Releases | Available | Authenticated, same-origin, CSRF-protected UI requires exact confirmation and writes only a private fixed marker. The root-owned agent ignores marker contents, accepts only the fixed project release source, verifies SHA-256, uses health-check rollback, and exposes sanitized status. Development checkouts remain disabled. |
 | Printers | `/printer` and associations | Mapped | CRUD plus host/group assignment and default semantics. |
 | Database export | Linked source exposes `/system/export` | Out of initial core | Sensitive and possibly patch-specific; no import or direct database manipulation. |
 | Plugins and plugin-defined features | Plugin-dependent | Out of core | Discoverable extensions can be added later; complete core coverage does not imply emulating every third-party plugin. |

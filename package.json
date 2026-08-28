@@ -13,7 +13,7 @@
     "dev:vite": "vite",
     "build": "vite build",
     "release": "bash scripts/build-release.sh",
-    "service:check": "bash -n scripts/build-release.sh scripts/install-dependencies.sh scripts/install-foggy.sh scripts/install-service.sh scripts/update-service.sh",
+    "service:check": "bash -n scripts/build-release.sh scripts/install-dependencies.sh scripts/install-foggy.sh scripts/install-service.sh scripts/update-latest.sh scripts/update-service.sh",
     "start": "NODE_ENV=production node src/server.js",
     "test": "node --test"
   },

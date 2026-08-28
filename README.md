@@ -117,6 +117,9 @@ all supported values.
 | `FOGGY_CONFIG_FILE` | `./config/foggy.json` | Server connection store |
 | `FOGGY_SESSION_FILE` | `./config/sessions.json` | Restart-persistent session metadata |
 | `FOGGY_SESSION_TTL_MS` | `3600000` | Cookie and server-side session lifetime |
+| `FOGGY_UPDATES_ENABLED` | `false` | Enables the systemd-backed update request UI |
+| `FOGGY_UPDATE_REQUEST_FILE` | Beside config | Fixed update-agent request marker |
+| `FOGGY_UPDATE_STATUS_FILE` | Beside config | Sanitized update-agent status |
 | `FOGGY_SNAPIN_UPLOAD_MAX_BYTES` | `2147483648` | Maximum proxied installer size |
 | `FOGGY_SNAPIN_UPLOAD_TIMEOUT_MS` | `1800000` | Upstream installer upload timeout |
 | `FOG_REQUEST_TIMEOUT_MS` | `10000` | Optional seeded server request timeout |
@@ -143,18 +146,18 @@ same GitHub release, verifies the archive, rejects unsafe paths, and then runs
 the normal distro-aware service installer. Review the downloaded script before
 running it when required by local policy.
 
-Maintainers publish a release by updating `package.json` and `package-lock.json`
-to the same version, committing the change, and pushing the matching tag:
+Every successful push to `main` publishes a release automatically after the
+release workflow repeats the tests, production build, and service checks.
+Release versions and tags use:
 
-```sh
-npm version patch
-git push origin main --follow-tags
+```text
+year.month.GitHub-Actions-run-number
 ```
 
-The tag must exactly match `v<package-version>`. GitHub Actions reruns the tests,
-production build, and service checks before publishing the archive, checksum,
-generated release notes, and bootstrap installer. A failed check creates no
-GitHub Release.
+For example, `2026.8.14` is the fourteenth run of the release workflow. The
+workflow injects that version into the packaged `package.json`, lockfile, and
+release manifest, then publishes the matching tag, archive, checksum, generated
+notes, and bootstrap installer. A failed check creates no GitHub Release.
 
 ### Local release build
 
@@ -163,6 +166,9 @@ Create a production archive from a checkout:
 ```sh
 npm run release
 ```
+
+Set `FOGGY_RELEASE_VERSION=2026.8.14` to produce a CalVer-named local archive;
+without it, local builds use the source package version.
 
 This performs a locked dependency installation, runs the complete test suite,
 builds hashed Vite assets, and creates:
@@ -217,6 +223,17 @@ The health endpoint reports Foggy process readiness only and exposes no FOG
 configuration or credentials.
 
 ## Updating
+
+Service installations expose **Administration → Updates**. An authenticated
+technician can check the latest verified release and type `UPDATE` to queue it.
+Foggy writes only a fixed mode-0600 marker; a root-owned systemd path handler
+resolves the trusted GitHub release itself, verifies its checksum, invokes the
+rollback-capable updater, and reports sanitized status back to Foggy. Express
+cannot supply an update URL or execute arbitrary privileged commands.
+
+Installations on `v0.1.1` or earlier do not yet have the systemd update bridge;
+run the one-command installer once to move onto the first CalVer release.
+Configuration and sessions remain in `/etc/foggy` and `/var/lib/foggy`.
 
 Install a verified local release:
 

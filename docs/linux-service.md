@@ -58,20 +58,16 @@ policy. The fully manual verified installation remains available below.
 
 ## Publish or build a release
 
-Pushing a `v<package-version>` tag runs `.github/workflows/release.yml`. The
-workflow rejects a tag that differs from `package.json`, runs the service checks
-and tested production build, and publishes the archive, checksum, installer,
-and generated notes as a GitHub Release. For example:
-
-```sh
-npm version patch
-git push origin main --follow-tags
-```
+Each push to `main` runs `.github/workflows/release.yml`. After the service
+checks and tested production build succeed, the workflow publishes the archive,
+checksum, installer, generated notes, and tag using
+`year.month.GitHub-Actions-run-number`, such as `2026.8.14`. Failed runs publish
+nothing.
 
 To build the same archive locally, use a clean Foggy checkout:
 
 ```sh
-npm run release
+FOGGY_RELEASE_VERSION=2026.8.14 npm run release
 ```
 
 The release command performs a locked `npm ci`, runs all tests, builds hashed
@@ -106,7 +102,9 @@ The installer:
 - creates `/var/lib/foggy` mode `0700` for connection data and sessions;
 - creates `/etc/foggy/foggy.env` mode `0640`, readable by the service group;
 - installs and enables `/etc/systemd/system/foggy.service`; and
-- installs `/usr/local/sbin/foggy-update`.
+- installs `/usr/local/sbin/foggy-update`; and
+- enables the root-owned `foggy-update.path` handler for authenticated update
+  requests from the application.
 
 The default service listens on `0.0.0.0:7400`. Open
 `http://<server-address>:7400/` to add the first FOG server. For an exposed or
@@ -129,6 +127,8 @@ mutable data at:
 ```text
 /var/lib/foggy/foggy.json
 /var/lib/foggy/sessions.json
+/var/lib/foggy/update-request.json
+/var/lib/foggy/update-status.json
 ```
 
 Back up `/etc/foggy` and `/var/lib/foggy`. Never place API tokens in the release
@@ -153,6 +153,30 @@ The health endpoint reports only application readiness and does not expose FOG
 credentials or test the upstream FOG server.
 
 ## Update
+
+The normal update workflow is **Administration → Updates** inside Foggy. The
+page checks the latest GitHub Release and requires the signed-in technician to
+enter `UPDATE`. The unprivileged web process atomically creates a private fixed
+request marker. It cannot choose a URL or run a command.
+
+`foggy-update.path` starts a root-owned oneshot handler when that marker exists.
+The handler ignores marker contents, resolves only the latest release from
+`github.com/BetaZay/foggy`, validates its published SHA-256, and calls the same
+health-checked updater used for manual updates. Progress and the final result
+are written back as a sanitized mode-0600 status record. Relevant diagnostics:
+
+```sh
+systemctl status foggy-update.path foggy-update.service
+journalctl -u foggy-update.service -n 200 --no-pager
+```
+
+Manual updates remain available for controlled or offline environments.
+
+`v0.1.1` and earlier installations need one transition using the one-command or
+manual installer because those releases predate `foggy-update.path`. Existing
+configuration, server tokens, and sessions remain in the external state paths
+and are preserved. Later releases can be installed entirely from the Updates
+page.
 
 Download and verify a new release, then pass the local archive to the updater:
 
@@ -182,11 +206,17 @@ policy after confirming a release is healthy.
 
 ## Service security boundary
 
-The unit runs without root privileges or Linux capabilities. It uses a private
+The web unit runs without root privileges or Linux capabilities. It uses a private
 temporary directory, a read-only system/application view, a writable allowlist
 for `/var/lib/foggy`, kernel/control-group protections, and a restrictive umask.
 FOG API and user tokens remain in the mode-restricted state file and are never
 placed in the unit or command line.
+
+The update agent is root-owned because installing and rolling back releases
+requires service and filesystem changes. Its input is deliberately constrained:
+the web process can create only a trigger marker, while the agent has a fixed
+repository, fixed release-asset naming, mandatory HTTPS and checksum
+verification, and no request-controlled command or URL.
 
 All four requested distributions use systemd, but distribution packaging is a
 separate future layer. Native `.deb`, `.rpm`, and Arch packages can call the same

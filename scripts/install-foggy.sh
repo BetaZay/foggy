@@ -24,12 +24,15 @@ LATEST_RELEASE_URL="$(
     "$REPOSITORY_URL/releases/latest"
 )"
 TAG="${LATEST_RELEASE_URL##*/}"
-if [[ ! "$TAG" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+if [[ "$TAG" =~ ^[0-9]{4}[.][0-9]{1,2}[.][0-9]+$ ]]; then
+  VERSION="$TAG"
+elif [[ "$TAG" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+  VERSION="${TAG#v}"
+else
   echo "GitHub returned an invalid latest release tag: $TAG" >&2
   exit 1
 fi
 
-VERSION="${TAG#v}"
 ARCHIVE_NAME="foggy-$VERSION.tar.gz"
 DOWNLOAD_URL="$REPOSITORY_URL/releases/download/$TAG"
 ARCHIVE="$WORK_DIR/$ARCHIVE_NAME"
